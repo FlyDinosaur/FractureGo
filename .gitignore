@@ -5,6 +5,23 @@
 ## User settings
 xcuserdata/
 
+## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
+*.xcscmblueprint
+*.xccheckout
+
+## compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
 ## Obj-C/Swift specific
 *.hmap
 
@@ -37,10 +54,11 @@ playground.xcworkspace
 # you should judge for yourself, the pros and cons are mentioned at:
 # https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-the-pods-directory-into-source-control
 #
-# Pods/
+Pods/
 #
 # Add this line if you want to avoid checking in source code from the Xcode workspace
-# *.xcworkspace
+*.xcworkspace
+!default.xcworkspace
 
 # Carthage
 #
@@ -48,6 +66,10 @@ playground.xcworkspace
 # Carthage/Checkouts
 
 Carthage/Build/
+
+# Accio dependency management
+Dependencies/
+.accio/
 
 # fastlane
 #
@@ -60,3 +82,44 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# Code Injection
+#
+# After new code Injection tools there's a generated folder /iOSInjectionProject
+# https://github.com/johnno1962/injectionforxcode
+
+iOSInjectionProject/
+
+# Machine Learning Models
+# These files are too large for Git and should be downloaded separately
+MLModels/**/*.task
+MLModels/**/*.tflite
+MLModels/**/*.mlmodel
+MLModels/**/*.coreml
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# App specific
+Config/Secrets.plist
+Config/Keys.plist
