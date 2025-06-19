@@ -12,7 +12,7 @@ struct TopBlurView: View {
         VStack {
             WaveShape()
                 .fill(Color(hex: "9ecd57"))
-                .frame(height: 300)
+                .frame(height: 160)
                 .ignoresSafeArea(edges: .top)
             Spacer()
         }
@@ -26,29 +26,50 @@ struct WaveShape: Shape {
         let width = rect.width
         let height = rect.height
         
-        // 开始点
+        // 开始点 - 左上角
         path.move(to: CGPoint(x: 0, y: 0))
         
-        // 顶部边缘
-        path.addLine(to: CGPoint(x: width, y: 0))
-        
-        // 右边缘
-        path.addLine(to: CGPoint(x: width, y: height * 0.7))
-        
-        // 波浪形底边
-        path.addCurve(
-            to: CGPoint(x: width * 0.6, y: height * 0.9),
-            control1: CGPoint(x: width * 0.9, y: height * 0.8),
-            control2: CGPoint(x: width * 0.75, y: height * 0.95)
+        // 顶部边缘 - 添加圆角
+        let topCornerRadius: CGFloat = 25
+        path.addLine(to: CGPoint(x: width - topCornerRadius, y: 0))
+        path.addQuadCurve(
+            to: CGPoint(x: width, y: topCornerRadius),
+            control: CGPoint(x: width, y: 0)
         )
         
+        // 右边缘到波浪开始位置
+        path.addLine(to: CGPoint(x: width, y: height * 0.45))
+        
+        // 更自然的波浪形底边
+        // 第一个波浪 - 从右侧开始的大波浪
+        path.addCurve(
+            to: CGPoint(x: width * 0.75, y: height * 0.7),
+            control1: CGPoint(x: width * 0.92, y: height * 0.55),
+            control2: CGPoint(x: width * 0.83, y: height * 0.75)
+        )
+        
+        // 第二个波浪 - 中等波浪
+        path.addCurve(
+            to: CGPoint(x: width * 0.5, y: height * 0.85),
+            control1: CGPoint(x: width * 0.67, y: height * 0.65),
+            control2: CGPoint(x: width * 0.58, y: height * 0.9)
+        )
+        
+        // 第三个波浪 - 较小的波浪
+        path.addCurve(
+            to: CGPoint(x: width * 0.25, y: height * 0.9),
+            control1: CGPoint(x: width * 0.42, y: height * 0.8),
+            control2: CGPoint(x: width * 0.33, y: height * 0.95)
+        )
+        
+        // 最后一段平滑过渡到左边缘
         path.addCurve(
             to: CGPoint(x: 0, y: height * 0.75),
-            control1: CGPoint(x: width * 0.4, y: height * 0.85),
-            control2: CGPoint(x: width * 0.2, y: height * 0.8)
+            control1: CGPoint(x: width * 0.17, y: height * 0.85),
+            control2: CGPoint(x: width * 0.08, y: height * 0.8)
         )
         
-        // 左边缘
+        // 左边缘回到起点
         path.addLine(to: CGPoint(x: 0, y: 0))
         
         return path
