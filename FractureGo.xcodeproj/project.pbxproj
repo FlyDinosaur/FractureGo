@@ -20,8 +20,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CA7C5E552E01C10400557BE4 /* FractureGo */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = FractureGo;
 			sourceTree = "<group>";
 		};
