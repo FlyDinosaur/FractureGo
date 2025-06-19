@@ -10,6 +10,8 @@ import CryptoKit
 
 struct WeChatBindingView: View {
     @Environment(\.dismiss) private var dismiss
+    let wechatUserInfo: WeChatUserInfo
+    
     @State private var nickname = ""
     @State private var phoneNumber = ""
     @State private var password = ""
@@ -19,6 +21,8 @@ struct WeChatBindingView: View {
     @State private var showMainView = false
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var defaultDate = Date()
+    @State private var userType = "患者"
     
     var body: some View {
         ZStack {
@@ -28,7 +32,7 @@ struct WeChatBindingView: View {
             // 顶部波浪遮挡
             TopBlurView()
             
-            VStack(spacing: 30) {
+            VStack(spacing: 20) {
                 // 返回按钮
                 HStack {
                     Button(action: {
@@ -38,227 +42,260 @@ struct WeChatBindingView: View {
                             .font(.title2)
                             .foregroundColor(.white)
                     }
+                    .padding(.leading, 20)
+                    
                     Spacer()
                 }
                 .padding(.top, 50)
-                .padding(.horizontal, 20)
                 
-                Spacer()
-                
-                // 绑定表单
-                VStack(spacing: 25) {
-                    Text("完善信息")
+                // 标题
+                VStack(spacing: 10) {
+                    Text("绑定微信账号")
                         .font(.title)
                         .fontWeight(.medium)
                         .foregroundColor(.black)
                     
-                    VStack(spacing: 15) {
-                        // 昵称输入框
-                        HStack {
-                            Image(systemName: "person")
-                                .foregroundColor(.gray)
-                                .frame(width: 20)
-                            TextField("昵称", text: $nickname)
-                                .textFieldStyle(PlainTextFieldStyle())
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        )
+                    Text("完善您的个人信息")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+                .padding(.top, 20)
+                
+                // 微信用户信息展示
+                VStack(spacing: 10) {
+                    AsyncImage(url: URL(string: wechatUserInfo.avatarUrl)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Image(systemName: "person.circle.fill")
+                            .foregroundColor(.gray)
+                    }
+                    .frame(width: 60, height: 60)
+                    .clipShape(Circle())
+                    
+                    Text("微信用户：\(wechatUserInfo.nickname)")
+                        .font(.body)
+                        .foregroundColor(.black)
+                }
+                .padding(.vertical, 10)
+                
+                // 表单
+                VStack(spacing: 15) {
+                    // 昵称输入
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("昵称")
+                            .font(.caption)
+                            .foregroundColor(.black)
+                        TextField("请输入昵称", text: $nickname)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .foregroundColor(.black)
+                    }
+                    
+                    // 手机号输入
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("手机号")
+                            .font(.caption)
+                            .foregroundColor(.black)
+                        TextField("请输入手机号", text: $phoneNumber)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .keyboardType(.phonePad)
+                            .foregroundColor(.black)
+                    }
+                    
+                    // 用户类型选择
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("用户类型")
+                            .font(.caption)
+                            .foregroundColor(.black)
                         
-                        // 手机号输入框
-                        HStack {
-                            Image(systemName: "phone")
-                                .foregroundColor(.gray)
-                                .frame(width: 20)
-                            TextField("手机号", text: $phoneNumber)
-                                .keyboardType(.phonePad)
-                                .textFieldStyle(PlainTextFieldStyle())
+                        HStack(spacing: 20) {
+                            Button(action: {
+                                userType = "患者"
+                            }) {
+                                HStack {
+                                    Image(systemName: userType == "患者" ? "checkmark.circle.fill" : "circle")
+                                        .foregroundColor(userType == "患者" ? .green : .gray)
+                                    Text("患者")
+                                        .foregroundColor(.black)
+                                }
+                            }
+                            
+                            Button(action: {
+                                userType = "医生"
+                            }) {
+                                HStack {
+                                    Image(systemName: userType == "医生" ? "checkmark.circle.fill" : "circle")
+                                        .foregroundColor(userType == "医生" ? .green : .gray)
+                                    Text("医生")
+                                        .foregroundColor(.black)
+                                }
+                            }
                         }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        )
+                    }
+                    
+                    // 出生日期选择
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("出生日期")
+                            .font(.caption)
+                            .foregroundColor(.black)
                         
-                        // 密码输入框
-                        HStack {
-                            Image(systemName: "lock")
-                                .foregroundColor(.gray)
-                                .frame(width: 20)
-                            SecureField("设置密码", text: $password)
-                                .textFieldStyle(PlainTextFieldStyle())
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        )
-                        
-                        // 确认密码输入框
-                        HStack {
-                            Image(systemName: "lock.fill")
-                                .foregroundColor(.gray)
-                                .frame(width: 20)
-                            SecureField("确认密码", text: $confirmPassword)
-                                .textFieldStyle(PlainTextFieldStyle())
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        )
-                        
-                        // 出生日期选择
                         Button(action: {
                             showDatePicker = true
                         }) {
                             HStack {
+                                Text(birthDate == defaultDate ? "请选择出生日期" : formatDate(birthDate))
+                                    .foregroundColor(birthDate == defaultDate ? .gray : .black)
+                                Spacer()
                                 Image(systemName: "calendar")
                                     .foregroundColor(.gray)
-                                    .frame(width: 20)
-                                if showDatePicker || birthDate != Date() {
-                                    Text(formatDate(birthDate))
-                                        .foregroundColor(.black)
-                                } else {
-                                    Text("选择出生日期")
-                                        .foregroundColor(.gray)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.down")
-                                    .foregroundColor(.gray)
-                                    .font(.caption)
                             }
                             .padding()
                             .background(Color.white)
-                            .cornerRadius(10)
+                            .cornerRadius(8)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                             )
                         }
-                        .sheet(isPresented: $showDatePicker) {
-                            DatePickerView(selectedDate: $birthDate, showDatePicker: $showDatePicker)
-                        }
                     }
-                    .padding(.horizontal, 30)
-                    
-                    // 绑定按钮
-                    Button(action: {
-                        bindWeChatUser()
-                    }) {
-                        Text("完成绑定")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color(hex: "9ecd57"))
-                            .cornerRadius(10)
-                    }
-                    .padding(.horizontal, 30)
-                    .disabled(nickname.isEmpty || phoneNumber.isEmpty || password.isEmpty || confirmPassword.isEmpty)
-                    .opacity(nickname.isEmpty || phoneNumber.isEmpty || password.isEmpty || confirmPassword.isEmpty ? 0.6 : 1.0)
                 }
+                .padding(.horizontal, 30)
                 
                 Spacer()
+                
+                // 绑定按钮
+                Button(action: {
+                    bindWeChatAccount()
+                }) {
+                    Text("完成绑定")
+                        .foregroundColor(.white)
+                        .font(.body)
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(Color.green)
+                        .cornerRadius(25)
+                }
+                .padding(.horizontal, 30)
+                .padding(.bottom, 50)
             }
         }
         .navigationBarHidden(true)
+        .onTapGesture {
+            // 点击空白区域隐藏键盘
+            hideKeyboard()
+        }
         .alert("提示", isPresented: $showAlert) {
-            Button("确定") { }
+            Button("确定") { 
+                if alertMessage.contains("绑定成功") {
+                    // 绑定成功后通知登录成功
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("WeChatLoginSuccess"),
+                        object: nil
+                    )
+                    dismiss()
+                }
+            }
         } message: {
             Text(alertMessage)
         }
         .fullScreenCover(isPresented: $showMainView) {
             MainView()
         }
+        .onAppear {
+            defaultDate = Date()
+            // 使用微信昵称作为默认昵称
+            nickname = wechatUserInfo.nickname
+        }
+        .sheet(isPresented: $showDatePicker) {
+            DatePickerView(selectedDate: $birthDate, showDatePicker: $showDatePicker)
+        }
     }
     
+    // 绑定微信账号
+    private func bindWeChatAccount() {
+        // 输入验证
+        guard !nickname.isEmpty else {
+            alertMessage = "请输入昵称"
+            showAlert = true
+            return
+        }
+        
+        guard !phoneNumber.isEmpty else {
+            alertMessage = "请输入手机号"
+            showAlert = true
+            return
+        }
+        
+        guard phoneNumber.count == 11 && phoneNumber.allSatisfy({ $0.isNumber }) else {
+            alertMessage = "请输入正确的手机号"
+            showAlert = true
+            return
+        }
+        
+        guard birthDate != defaultDate else {
+            alertMessage = "请选择出生日期"
+            showAlert = true
+            return
+        }
+        
+        // 执行绑定
+        let success = UserManager.shared.bindWeChatUser(
+            phoneNumber: phoneNumber,
+            nickname: nickname,
+            userType: userType,
+            birthDate: birthDate,
+            wechatUserInfo: wechatUserInfo
+        )
+        
+        if success {
+            alertMessage = "微信账号绑定成功！"
+            showAlert = true
+        } else {
+            alertMessage = "该手机号已被使用，请更换手机号"
+            showAlert = true
+        }
+    }
+    
+    // 格式化日期
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy年MM月dd日"
         return formatter.string(from: date)
     }
+}
+
+struct DatePickerView: View {
+    @Binding var selectedDate: Date
+    @Binding var showDatePicker: Bool
     
-    private func bindWeChatUser() {
-        // 验证输入
-        guard validateInput() else { return }
-        
-        // 根据出生日期自动判断用户类型
-        let age = Calendar.current.dateComponents([.year], from: birthDate, to: Date()).year ?? 0
-        let userType = age >= 18 ? "家长" : "儿童"
-        
-        // MD5加密密码
-        let encryptedPassword = md5Hash(password)
-        
-        // 保存用户数据
-        let userData: [String: Any] = [
-            "nickname": nickname,
-            "phoneNumber": phoneNumber,
-            "password": encryptedPassword,
-            "birthDate": birthDate.timeIntervalSince1970,
-            "userType": userType,
-            "isWeChatUser": true
-        ]
-        
-        UserDefaults.standard.set(userData, forKey: "userData_\(phoneNumber)")
-        
-        // 设置当前用户
-        UserManager.shared.loginUser(phoneNumber: phoneNumber, userData: userData)
-        
-        showMainView = true
-    }
-    
-    private func validateInput() -> Bool {
-        if nickname.isEmpty {
-            alertMessage = "请输入昵称"
-            showAlert = true
-            return false
+    var body: some View {
+        NavigationView {
+            VStack {
+                DatePicker("选择出生日期", selection: $selectedDate, in: ...Date(), displayedComponents: .date)
+                    .datePickerStyle(WheelDatePickerStyle())
+                    .labelsHidden()
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("选择出生日期")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完成") {
+                        showDatePicker = false
+                    }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        showDatePicker = false
+                    }
+                }
+            }
         }
-        
-        if phoneNumber.isEmpty || phoneNumber.count != 11 {
-            alertMessage = "请输入正确的手机号"
-            showAlert = true
-            return false
-        }
-        
-        if password.isEmpty || password.count < 6 {
-            alertMessage = "密码至少6位"
-            showAlert = true
-            return false
-        }
-        
-        if password != confirmPassword {
-            alertMessage = "两次密码输入不一致"
-            showAlert = true
-            return false
-        }
-        
-        // 检查手机号是否已存在
-        if UserDefaults.standard.dictionary(forKey: "userData_\(phoneNumber)") != nil {
-            alertMessage = "该手机号已被使用"
-            showAlert = true
-            return false
-        }
-        
-        return true
-    }
-    
-    private func md5Hash(_ string: String) -> String {
-        let digest = Insecure.MD5.hash(data: string.data(using: .utf8) ?? Data())
-        return digest.map { String(format: "%02hhx", $0) }.joined()
     }
 }
 
 #Preview {
-    WeChatBindingView()
+    WeChatBindingView(wechatUserInfo: WeChatUserInfo(openId: "mock_wechat_openid_1234", nickname: "微信用户123", avatarUrl: "https://example.com/avatar.jpg", unionId: nil))
 } 

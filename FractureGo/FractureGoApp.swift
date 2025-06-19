@@ -13,7 +13,12 @@ struct FractureGoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            SplashView()
+            ContentView()
+                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .onOpenURL { url in
+                    // 处理微信回调
+                    _ = WeChatManager.shared.handleOpenURL(url)
+                }
         }
     }
 }

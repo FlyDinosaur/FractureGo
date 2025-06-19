@@ -10,86 +10,106 @@ import SwiftUI
 struct LoginView: View {
     @State private var showAccountLogin = false
     @State private var showWeChatBinding = false
+    @State private var isWeChatLogging = false
+    @State private var showAlert = false
+    @State private var alertMessage = ""
+    @ObservedObject private var wechatManager = WeChatManager.shared
+    @ObservedObject private var userManager = UserManager.shared
     
     var body: some View {
-        ZStack {
-            // 背景
-            Color.white.ignoresSafeArea()
-            
-            // 顶部波浪遮挡
-            TopBlurView()
-            
-            VStack(spacing: 40) {
-                Spacer()
+        NavigationView {
+            ZStack {
+                // 背景
+                Color.white.ignoresSafeArea()
                 
-                // Logo和标题
-                VStack(spacing: 20) {
-                    Image("icon")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 80, height: 80)
+                // 顶部波浪遮挡
+                TopBlurView()
+                
+                VStack(spacing: 40) {
+                    Spacer()
                     
-                    Text("FractureGo")
-                        .font(.system(size: 24, weight: .light))
-                        .foregroundColor(.black)
-                }
-                .padding(.top, 100)
-                
-                Spacer()
-                
-                // 登录按钮组
-                VStack(spacing: 20) {
-                    // 微信登录按钮
-                    Button(action: {
-                        handleWeChatLogin()
-                    }) {
-                        HStack {
-                            Image(systemName: "message.fill")
-                                .foregroundColor(.white)
-                            Text("微信登录")
-                                .foregroundColor(.white)
-                                .font(.system(size: 16, weight: .medium))
+                    // Logo和标题 - 居中显示
+                    VStack(spacing: 20) {
+                        Image("icon")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 100, height: 100)
+                        
+                        Text("FractureGo")
+                            .font(.system(size: 28, weight: .bold, design: .default))
+                            .foregroundColor(.black)
+                    }
+                    
+                    Spacer()
+                    
+                    // 登录按钮区域 - 居中靠上
+                    VStack(spacing: 20) {
+                        // 微信登录按钮
+                        Button(action: {
+                            // 显示暂未支持提示
+                            alertMessage = "微信登录功能暂未支持，请使用账号密码登录"
+                            showAlert = true
+                        }) {
+                            HStack {
+                                if isWeChatLogging {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                    Text("连接中...")
+                                        .foregroundColor(.white)
+                                } else {
+                                    Text("微信登录")
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 50)
+                            .background(Color(hex: "9ecd57"))
+                            .cornerRadius(25)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color(hex: "9ecd57"))
-                        .cornerRadius(25)
+                        .padding(.horizontal, 40)
+                        
+                        // 账号密码登录按钮
+                        Button(action: {
+                            showAccountLogin = true
+                        }) {
+                            Text("账号密码登录")
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity, minHeight: 50)
+                                .background(Color.white)
+                                .cornerRadius(25)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .stroke(Color.black, lineWidth: 1)
+                                )
+                        }
+                        .padding(.horizontal, 40)
                     }
-                    .padding(.horizontal, 40)
                     
-                    // 账号密码登录按钮
-                    Button(action: {
-                        showAccountLogin = true
-                    }) {
-                        Text("账号密码登录")
-                            .foregroundColor(Color(hex: "9ecd57"))
-                            .font(.system(size: 16, weight: .medium))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color(hex: "9ecd57"), lineWidth: 2)
-                            )
-                    }
-                    .padding(.horizontal, 40)
+                    Spacer()
                 }
-                
-                Spacer()
-                    .frame(height: 80)
+            }
+            .onTapGesture {
+                // 点击空白区域隐藏键盘
+                hideKeyboard()
             }
         }
+        .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showAccountLogin) {
             AccountLoginView()
         }
         .fullScreenCover(isPresented: $showWeChatBinding) {
-            WeChatBindingView()
+            WeChatBindingView(wechatUserInfo: WeChatUserInfo(
+                openId: "temp_openid",
+                nickname: "临时用户",
+                avatarUrl: "",
+                unionId: nil
+            ))
         }
-    }
-    
-    private func handleWeChatLogin() {
-        // 这里实现微信登录逻辑
-        // 暂时直接跳转到绑定界面模拟首次登录
-        showWeChatBinding = true
+        .alert("提示", isPresented: $showAlert) {
+            Button("确定") { }
+        } message: {
+            Text(alertMessage)
+        }
     }
 }
 

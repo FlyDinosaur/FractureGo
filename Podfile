@@ -8,6 +8,9 @@ target 'FractureGo' do
   # Pods for FractureGo
   pod 'MediaPipeTasksVision', '~> 0.10.0'
   
+  # 微信SDK
+  pod 'WechatOpenSDK', '~> 2.0.2'
+  
   # 如果需要其他依赖，可以在这里添加
   # pod 'Alamofire' # 网络请求（如需要）
 
