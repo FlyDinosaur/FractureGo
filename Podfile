@@ -12,15 +12,6 @@ target 'FractureGo' do
   
   # Additional dependencies for ML and vision processing
   pod 'GoogleMLKit/PoseDetection', '~> 4.0.0'
-  
-  target 'FractureGoTests' do
-    inherit! :search_paths
-    # Pods for testing
-  end
-
-  target 'FractureGoUITests' do
-    # Pods for testing
-  end
 
 end
 

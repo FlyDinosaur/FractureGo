@@ -8,12 +8,7 @@ enum UserType: String, CaseIterable {
     case doctor = "医生"
 }
 
-// MARK: - 性别枚举
-enum Gender: String, CaseIterable {
-    case male = "男"
-    case female = "女"
-    case other = "其他"
-}
+
 
 // MARK: - 登录方式枚举
 enum LoginType {
@@ -24,12 +19,11 @@ enum LoginType {
 
 // MARK: - 用户数据模型协议
 protocol UserModelProtocol {
-    var userID: String { get set }
-    var username: String { get set }
-    var userType: UserType { get set }
-    var phoneNumber: String { get set }
-    var gender: Gender { get set }
-    var birthDate: Date { get set }
+    var userID: String { get set }  // Primary Key
+    var nickname: String { get set }  // 用户名（昵称）
+    var userType: UserType { get set }  // 账户类别（儿童、家长、医生）
+    var phoneNumber: String { get set }  // 手机号
+    var birthDate: Date { get set }  // 出生日期
     var avatar: String? { get set }
     var isWechatUser: Bool { get set }
     var createdAt: Date { get set }
@@ -38,8 +32,8 @@ protocol UserModelProtocol {
 
 // MARK: - 用户认证数据模型协议
 protocol UserAuthModelProtocol {
-    var userID: String { get set }
-    var passwordHash: String { get set }
+    var userID: String { get set }  // 关联用户ID (Primary Key)
+    var passwordHash: String { get set }  // 密码（MD5加密后存储）
     var wechatOpenID: String? { get set }
     var isAutoLogin: Bool { get set }
     var lastLoginTime: Date? { get set }
