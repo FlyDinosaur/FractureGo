@@ -27,21 +27,24 @@ struct MainView: View {
                         .ignoresSafeArea(edges: .top)
                     
                     // 中间内容区域 - 减去顶部和底部导航栏的高度
-                    ZStack {
-                        switch selectedTab {
-                        case 0:
-                            HomeContentView()
-                        case 1:
-                            SignInContentView()
-                        case 2:
-                            MainContentView()
-                        case 3:
-                            ShareContentView()
-                        case 4:
-                            MyContentView()
-                        default:
-                            HomeContentView()
+                    NavigationView {
+                        ZStack {
+                            switch selectedTab {
+                            case 0:
+                                HomeView()
+                            case 1:
+                                SignInView()
+                            case 2:
+                                CardListView() // 主图标显示卡片列表
+                            case 3:
+                                ShareView()
+                            case 4:
+                                MyView()
+                            default:
+                                HomeView()
+                            }
                         }
+                        .navigationBarHidden(true)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: geometry.size.height - 160 - 80 - geometry.safeAreaInsets.bottom)
@@ -112,90 +115,7 @@ struct MainView: View {
     }
 }
 
-// Home内容视图（不包含TopBlurView）
-struct HomeContentView: View {
-    var body: some View {
-        VStack {
-            Spacer()
-            
-            Text("HomeView")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// SignIn内容视图
-struct SignInContentView: View {
-    var body: some View {
-        VStack {
-            Spacer()
-            
-            Text("SignInView")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// 主内容视图
-struct MainContentView: View {
-    var body: some View {
-        VStack {
-            Spacer()
-            
-            Text("MainView")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// Share内容视图
-struct ShareContentView: View {
-    var body: some View {
-        VStack {
-            Spacer()
-            
-            Text("ShareView")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// My内容视图
-struct MyContentView: View {
-    var body: some View {
-        VStack {
-            Spacer()
-            
-            Text("MyView")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
+// 这些占位符内容视图已被实际的View替代
 
 // 底部导航栏项目组件
 struct TabBarItem: View {
@@ -230,6 +150,58 @@ struct TabBarItem: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 60)
+    }
+}
+
+// 卡片列表视图
+struct CardListView: View {
+    var body: some View {
+        VStack(spacing: 20) {
+            Spacer(minLength: 10)
+            
+            // 卡片1 - 手部训练
+            NavigationLink(destination: HandLevelView()) {
+                CardImageView(imageName: "卡片1", title: "手部训练")
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // 卡片2 - 手臂训练
+            NavigationLink(destination: ArmLevelView()) {
+                CardImageView(imageName: "卡片2", title: "手臂训练")
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // 卡片3 - 腿部训练
+            NavigationLink(destination: LegLevelView()) {
+                CardImageView(imageName: "卡片3", title: "腿部训练")
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(hex: "f5f5f0"))
+    }
+}
+
+// 卡片图片视图组件
+struct CardImageView: View {
+    let imageName: String
+    let title: String
+    
+    var body: some View {
+        HStack {
+            Image(imageName)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 300, height: 140)
+                .clipped()
+                .cornerRadius(16)
+            
+            Spacer(minLength: 0)
+        }
+        .frame(width: 300, height: 140)
     }
 }
 

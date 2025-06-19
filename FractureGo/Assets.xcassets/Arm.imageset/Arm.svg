@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_图层_2" data-name="图层 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 177.86 177.86">
+  <defs>
+    <style>
+      .cls-1 {
+        opacity: .6;
+      }
+
+      .cls-1, .cls-2 {
+        fill: #9ecd57;
+      }
+
+      .cls-2 {
+        opacity: .8;
+      }
+    </style>
+  </defs>
+  <g id="_图层_3" data-name="图层 3">
+    <circle class="cls-2" cx="68.77" cy="68.77" r="68.77"/>
+    <circle class="cls-1" cx="117.89" cy="117.89" r="59.98"/>
+  </g>
+</svg>
