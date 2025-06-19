@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		16BEEAA88E85499B8B7AA49F /* Pods_FractureGo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2503EC3056ECBC25C9F18B18 /* Pods_FractureGo.framework */; };
+		8B0D65E94D71C6443D3B5758 /* Pods_FractureGo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F2216936C55CA51592574E1 /* Pods_FractureGo.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2503EC3056ECBC25C9F18B18 /* Pods_FractureGo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_FractureGo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		4A7F4BE640D18B33058C0E05 /* Pods-FractureGo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FractureGo.debug.xcconfig"; path = "Target Support Files/Pods-FractureGo/Pods-FractureGo.debug.xcconfig"; sourceTree = "<group>"; };
-		71EA78DA8290BF2DFEB36FA8 /* Pods-FractureGo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FractureGo.release.xcconfig"; path = "Target Support Files/Pods-FractureGo/Pods-FractureGo.release.xcconfig"; sourceTree = "<group>"; };
+		0BE6B53500E3C35012FBE50F /* Pods-FractureGo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FractureGo.release.xcconfig"; path = "Target Support Files/Pods-FractureGo/Pods-FractureGo.release.xcconfig"; sourceTree = "<group>"; };
+		6F2216936C55CA51592574E1 /* Pods_FractureGo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_FractureGo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		77F7DF7A0F0971B9FF14B205 /* Pods-FractureGo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FractureGo.debug.xcconfig"; path = "Target Support Files/Pods-FractureGo/Pods-FractureGo.debug.xcconfig"; sourceTree = "<group>"; };
 		CA7C5E532E01C10400557BE4 /* FractureGo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FractureGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -32,27 +32,26 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				16BEEAA88E85499B8B7AA49F /* Pods_FractureGo.framework in Frameworks */,
+				8B0D65E94D71C6443D3B5758 /* Pods_FractureGo.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6FBA54D187892677E350CA54 /* Pods */ = {
+		41CDDC206F7AFBC429035D87 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				4A7F4BE640D18B33058C0E05 /* Pods-FractureGo.debug.xcconfig */,
-				71EA78DA8290BF2DFEB36FA8 /* Pods-FractureGo.release.xcconfig */,
+				77F7DF7A0F0971B9FF14B205 /* Pods-FractureGo.debug.xcconfig */,
+				0BE6B53500E3C35012FBE50F /* Pods-FractureGo.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
-		C0989D3D775EE5329A3F1CFF /* Frameworks */ = {
+		B513BB3542C7B0892D31BB25 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				2503EC3056ECBC25C9F18B18 /* Pods_FractureGo.framework */,
+				6F2216936C55CA51592574E1 /* Pods_FractureGo.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -62,8 +61,8 @@
 			children = (
 				CA7C5E552E01C10400557BE4 /* FractureGo */,
 				CA7C5E542E01C10400557BE4 /* Products */,
-				6FBA54D187892677E350CA54 /* Pods */,
-				C0989D3D775EE5329A3F1CFF /* Frameworks */,
+				41CDDC206F7AFBC429035D87 /* Pods */,
+				B513BB3542C7B0892D31BB25 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -82,12 +81,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = CA7C5E662E01C10600557BE4 /* Build configuration list for PBXNativeTarget "FractureGo" */;
 			buildPhases = (
-				ECAA87E5180568487F47D3C3 /* [CP] Check Pods Manifest.lock */,
+				594BA50F91C8CF99092FE0CC /* [CP] Check Pods Manifest.lock */,
 				CA7C5E4F2E01C10400557BE4 /* Sources */,
 				CA7C5E502E01C10400557BE4 /* Frameworks */,
 				CA7C5E512E01C10400557BE4 /* Resources */,
-				1BE13207CCA61CFD0CB3A1B6 /* [CP] Embed Pods Frameworks */,
-				4F51E7785C5E754B9850F671 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -146,41 +143,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		1BE13207CCA61CFD0CB3A1B6 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FractureGo/Pods-FractureGo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FractureGo/Pods-FractureGo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FractureGo/Pods-FractureGo-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		4F51E7785C5E754B9850F671 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FractureGo/Pods-FractureGo-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FractureGo/Pods-FractureGo-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FractureGo/Pods-FractureGo-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		ECAA87E5180568487F47D3C3 /* [CP] Check Pods Manifest.lock */ = {
+		594BA50F91C8CF99092FE0CC /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -336,7 +299,7 @@
 		};
 		CA7C5E672E01C10600557BE4 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4A7F4BE640D18B33058C0E05 /* Pods-FractureGo.debug.xcconfig */;
+			baseConfigurationReference = 77F7DF7A0F0971B9FF14B205 /* Pods-FractureGo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -351,6 +314,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -366,7 +330,7 @@
 		};
 		CA7C5E682E01C10600557BE4 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 71EA78DA8290BF2DFEB36FA8 /* Pods-FractureGo.release.xcconfig */;
+			baseConfigurationReference = 0BE6B53500E3C35012FBE50F /* Pods-FractureGo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -381,6 +345,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
