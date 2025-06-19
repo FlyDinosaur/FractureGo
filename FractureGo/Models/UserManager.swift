@@ -9,6 +9,8 @@ import Foundation
 import SwiftUI
 
 class UserManager: ObservableObject {
+    static let shared = UserManager()
+    
     @Published var isLoggedIn = false
     @Published var currentUser: UserData?
     
@@ -20,7 +22,7 @@ class UserManager: ObservableObject {
         let isWeChatUser: Bool
     }
     
-    init() {
+    private init() {
         checkAutoLogin()
     }
     
@@ -28,45 +30,26 @@ class UserManager: ObservableObject {
         let isAutoLogin = UserDefaults.standard.bool(forKey: "isAutoLogin")
         if isAutoLogin, let phoneNumber = UserDefaults.standard.string(forKey: "savedPhoneNumber") {
             if let userData = UserDefaults.standard.dictionary(forKey: "userData_\(phoneNumber)") {
-                loadUserData(from: userData)
+                loadUserData(from: userData, phoneNumber: phoneNumber)
                 isLoggedIn = true
             }
         }
     }
     
-    func login(phoneNumber: String, password: String, autoLogin: Bool = false) -> Bool {
-        // 验证用户凭据
-        if let userData = UserDefaults.standard.dictionary(forKey: "userData_\(phoneNumber)") {
-            if let savedPassword = userData["password"] as? String,
-               savedPassword == password.md5 {
-                
-                if autoLogin {
-                    UserDefaults.standard.set(true, forKey: "isAutoLogin")
-                    UserDefaults.standard.set(phoneNumber, forKey: "savedPhoneNumber")
-                }
-                
-                loadUserData(from: userData)
-                isLoggedIn = true
-                return true
-            }
+    func loginUser(phoneNumber: String, userData: [String: Any]) {
+        loadUserData(from: userData, phoneNumber: phoneNumber)
+        isLoggedIn = true
+    }
+    
+    private func loadUserData(from userData: [String: Any], phoneNumber: String) {
+        guard let nickname = userData["nickname"] as? String,
+              let userType = userData["userType"] as? String,
+              let birthDateTimestamp = userData["birthDate"] as? TimeInterval,
+              let isWeChatUser = userData["isWeChatUser"] as? Bool else {
+            return
         }
-        return false
-    }
-    
-    func logout() {
-        isLoggedIn = false
-        currentUser = nil
-        UserDefaults.standard.set(false, forKey: "isAutoLogin")
-        UserDefaults.standard.removeObject(forKey: "savedPhoneNumber")
-    }
-    
-    private func loadUserData(from data: [String: Any]) {
-        guard let nickname = data["nickname"] as? String,
-              let phoneNumber = data["phoneNumber"] as? String,
-              let userType = data["userType"] as? String,
-              let birthDate = data["birthDate"] as? Date else { return }
         
-        let isWeChatUser = data["isWeChatUser"] as? Bool ?? false
+        let birthDate = Date(timeIntervalSince1970: birthDateTimestamp)
         
         currentUser = UserData(
             nickname: nickname,
@@ -75,5 +58,12 @@ class UserManager: ObservableObject {
             birthDate: birthDate,
             isWeChatUser: isWeChatUser
         )
+    }
+    
+    func logout() {
+        isLoggedIn = false
+        currentUser = nil
+        UserDefaults.standard.removeObject(forKey: "isAutoLogin")
+        UserDefaults.standard.removeObject(forKey: "savedPhoneNumber")
     }
 } 

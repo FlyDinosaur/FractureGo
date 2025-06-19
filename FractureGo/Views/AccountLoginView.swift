@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CryptoKit
 
 struct AccountLoginView: View {
     @Environment(\.dismiss) private var dismiss
@@ -14,6 +15,8 @@ struct AccountLoginView: View {
     @State private var isAutoLogin = false
     @State private var showRegister = false
     @State private var showMainView = false
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     
     var body: some View {
         ZStack {
@@ -30,154 +33,189 @@ struct AccountLoginView: View {
                         dismiss()
                     }) {
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.white)
                             .font(.title2)
-                            .padding()
+                            .foregroundColor(.white)
                     }
                     Spacer()
                 }
                 .padding(.top, 50)
+                .padding(.horizontal, 20)
                 
                 Spacer()
                 
-                // 登录标题
-                Text("登录")
-                    .font(.system(size: 28, weight: .medium))
-                    .foregroundColor(Color(hex: "9ecd57"))
-                    .padding(.bottom, 20)
-                
-                // 输入框容器
-                VStack(spacing: 20) {
-                    // 手机号输入框
-                    VStack(alignment: .leading, spacing: 8) {
+                // 登录表单
+                VStack(spacing: 25) {
+                    Text("账号登录")
+                        .font(.title)
+                        .fontWeight(.medium)
+                        .foregroundColor(.black)
+                    
+                    VStack(spacing: 15) {
+                        // 手机号输入框
                         HStack {
-                            TextField("手机号码", text: $phoneNumber)
-                                .font(.system(size: 16))
-                                .foregroundColor(.black)
+                            Image(systemName: "phone")
+                                .foregroundColor(.gray)
+                                .frame(width: 20)
+                            TextField("手机号", text: $phoneNumber)
                                 .keyboardType(.phonePad)
+                                .textFieldStyle(PlainTextFieldStyle())
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 15)
+                        .padding()
                         .background(Color.white)
+                        .cornerRadius(10)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 25)
+                            RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                         )
-                        .cornerRadius(25)
-                    }
-                    
-                    // 密码输入框
-                    VStack(alignment: .leading, spacing: 8) {
+                        
+                        // 密码输入框
                         HStack {
+                            Image(systemName: "lock")
+                                .foregroundColor(.gray)
+                                .frame(width: 20)
                             SecureField("密码", text: $password)
-                                .font(.system(size: 16))
-                                .foregroundColor(.black)
+                                .textFieldStyle(PlainTextFieldStyle())
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 15)
+                        .padding()
                         .background(Color.white)
+                        .cornerRadius(10)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 25)
+                            RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                         )
-                        .cornerRadius(25)
-                    }
-                }
-                .padding(.horizontal, 30)
-                
-                // 自动登录和忘记密码
-                HStack {
-                    // 自动登录选择框
-                    Button(action: {
-                        isAutoLogin.toggle()
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: isAutoLogin ? "checkmark.square.fill" : "square")
-                                .foregroundColor(Color(hex: "9ecd57"))
-                                .font(.title3)
-                            Text("自动登录")
-                                .foregroundColor(Color(hex: "9ecd57"))
-                                .font(.system(size: 14))
+                        
+                        // 自动登录和忘记密码
+                        HStack {
+                            Button(action: {
+                                isAutoLogin.toggle()
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: isAutoLogin ? "checkmark.square" : "square")
+                                        .foregroundColor(Color(hex: "9ecd57"))
+                                    Text("自动登录")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.black)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                // 忘记密码逻辑
+                                alertMessage = "请联系客服重置密码"
+                                showAlert = true
+                            }) {
+                                Text("忘记密码？")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.black)
+                            }
                         }
-                    }
-                    
-                    Spacer()
-                    
-                    // 忘记密码
-                    Button(action: {
-                        // 处理忘记密码
-                    }) {
-                        Text("忘记密码?")
-                            .foregroundColor(.gray)
-                            .font(.system(size: 14))
-                    }
-                }
-                .padding(.horizontal, 30)
-                
-                Spacer()
-                
-                // 按钮组
-                VStack(spacing: 15) {
-                    // 登录按钮
-                    Button(action: {
-                        handleLogin()
-                    }) {
-                        Text("登录")
-                            .foregroundColor(.white)
-                            .font(.system(size: 16, weight: .medium))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(Color(hex: "9ecd57"))
-                            .cornerRadius(25)
                     }
                     .padding(.horizontal, 30)
                     
-                    // 或者分隔线
-                    Text("或者")
-                        .foregroundColor(.gray)
-                        .font(.system(size: 14))
+                    // 登录按钮
+                    Button(action: {
+                        loginUser()
+                    }) {
+                        Text("登录")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color(hex: "9ecd57"))
+                            .cornerRadius(10)
+                    }
+                    .padding(.horizontal, 30)
+                    .disabled(phoneNumber.isEmpty || password.isEmpty)
+                    .opacity(phoneNumber.isEmpty || password.isEmpty ? 0.6 : 1.0)
                     
                     // 注册按钮
                     Button(action: {
                         showRegister = true
                     }) {
                         Text("注册")
+                            .font(.headline)
                             .foregroundColor(Color(hex: "9ecd57"))
-                            .font(.system(size: 16, weight: .medium))
                             .frame(maxWidth: .infinity)
-                            .frame(height: 50)
+                            .padding()
+                            .background(Color.clear)
+                            .cornerRadius(10)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color(hex: "9ecd57"), lineWidth: 2)
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(hex: "9ecd57"), lineWidth: 1)
                             )
                     }
                     .padding(.horizontal, 30)
                 }
                 
                 Spacer()
-                    .frame(height: 60)
             }
         }
-        .fullScreenCover(isPresented: $showRegister) {
+        .navigationBarHidden(true)
+        .alert("提示", isPresented: $showAlert) {
+            Button("确定") { }
+        } message: {
+            Text(alertMessage)
+        }
+        .sheet(isPresented: $showRegister) {
             RegisterView()
         }
         .fullScreenCover(isPresented: $showMainView) {
             MainView()
         }
+        .onAppear {
+            loadSavedCredentials()
+        }
     }
     
-    private func handleLogin() {
-        // 这里实现登录逻辑
-        // 验证手机号和密码
-        if !phoneNumber.isEmpty && !password.isEmpty {
-            // 模拟登录成功
-            if isAutoLogin {
-                // 保存自动登录信息
-                UserDefaults.standard.set(true, forKey: "isAutoLogin")
-                UserDefaults.standard.set(phoneNumber, forKey: "savedPhoneNumber")
-            }
-            showMainView = true
+    private func loginUser() {
+        // 验证输入
+        guard !phoneNumber.isEmpty && !password.isEmpty else {
+            alertMessage = "请输入手机号和密码"
+            showAlert = true
+            return
         }
+        
+        // 获取用户数据
+        guard let userData = UserDefaults.standard.dictionary(forKey: "userData_\(phoneNumber)") else {
+            alertMessage = "用户不存在，请先注册"
+            showAlert = true
+            return
+        }
+        
+        // 验证密码
+        let encryptedPassword = md5Hash(password)
+        guard let savedPassword = userData["password"] as? String,
+              savedPassword == encryptedPassword else {
+            alertMessage = "密码错误"
+            showAlert = true
+            return
+        }
+        
+        // 保存自动登录状态
+        if isAutoLogin {
+            UserDefaults.standard.set(true, forKey: "isAutoLogin")
+            UserDefaults.standard.set(phoneNumber, forKey: "savedPhoneNumber")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "isAutoLogin")
+            UserDefaults.standard.removeObject(forKey: "savedPhoneNumber")
+        }
+        
+        // 登录成功
+        UserManager.shared.loginUser(phoneNumber: phoneNumber, userData: userData)
+        showMainView = true
+    }
+    
+    private func loadSavedCredentials() {
+        if let savedPhoneNumber = UserDefaults.standard.string(forKey: "savedPhoneNumber") {
+            phoneNumber = savedPhoneNumber
+            isAutoLogin = UserDefaults.standard.bool(forKey: "isAutoLogin")
+        }
+    }
+    
+    private func md5Hash(_ string: String) -> String {
+        let digest = Insecure.MD5.hash(data: string.data(using: .utf8) ?? Data())
+        return digest.map { String(format: "%02hhx", $0) }.joined()
     }
 }
 

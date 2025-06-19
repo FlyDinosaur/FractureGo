@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CryptoKit
 
 struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
@@ -16,13 +17,8 @@ struct RegisterView: View {
     @State private var birthDate = Date()
     @State private var showDatePicker = false
     @State private var showMainView = false
-    @State private var userType: UserType = .child
-    
-    enum UserType: String, CaseIterable {
-        case child = "儿童"
-        case parent = "家长"
-        case doctor = "医生"
-    }
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     
     var body: some View {
         ZStack {
@@ -32,205 +28,266 @@ struct RegisterView: View {
             // 顶部波浪遮挡
             TopBlurView()
             
-            ScrollView {
-                VStack(spacing: 25) {
-                    // 返回按钮
-                    HStack {
-                        Button(action: {
-                            dismiss()
-                        }) {
-                            Image(systemName: "chevron.left")
-                                .foregroundColor(.white)
-                                .font(.title2)
-                                .padding()
-                        }
-                        Spacer()
+            VStack(spacing: 30) {
+                // 返回按钮
+                HStack {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                            .foregroundColor(.white)
                     }
-                    .padding(.top, 50)
+                    Spacer()
+                }
+                .padding(.top, 50)
+                .padding(.horizontal, 20)
+                
+                Spacer()
+                
+                // 注册表单
+                VStack(spacing: 25) {
+                    Text("创建账户")
+                        .font(.title)
+                        .fontWeight(.medium)
+                        .foregroundColor(.black)
                     
-                    // 注册标题
-                    Text("注册")
-                        .font(.system(size: 28, weight: .medium))
-                        .foregroundColor(Color(hex: "9ecd57"))
-                        .padding(.bottom, 20)
-                    
-                    // 输入框组
-                    VStack(spacing: 20) {
+                    VStack(spacing: 15) {
                         // 昵称输入框
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                TextField("昵称（用户名）", text: $nickname)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.black)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 15)
-                            .background(Color.white)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                            .cornerRadius(25)
+                        HStack {
+                            Image(systemName: "person")
+                                .foregroundColor(.gray)
+                                .frame(width: 20)
+                            TextField("昵称", text: $nickname)
+                                .textFieldStyle(PlainTextFieldStyle())
                         }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
                         
                         // 手机号输入框
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                TextField("手机号码", text: $phoneNumber)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.black)
-                                    .keyboardType(.phonePad)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 15)
-                            .background(Color.white)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                            .cornerRadius(25)
+                        HStack {
+                            Image(systemName: "phone")
+                                .foregroundColor(.gray)
+                                .frame(width: 20)
+                            TextField("手机号", text: $phoneNumber)
+                                .keyboardType(.phonePad)
+                                .textFieldStyle(PlainTextFieldStyle())
                         }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
                         
                         // 密码输入框
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                SecureField("密码", text: $password)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.black)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 15)
-                            .background(Color.white)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                            .cornerRadius(25)
+                        HStack {
+                            Image(systemName: "lock")
+                                .foregroundColor(.gray)
+                                .frame(width: 20)
+                            SecureField("密码", text: $password)
+                                .textFieldStyle(PlainTextFieldStyle())
                         }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
                         
                         // 确认密码输入框
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                SecureField("确认密码", text: $confirmPassword)
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.black)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 15)
-                            .background(Color.white)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(password == confirmPassword ? Color.gray.opacity(0.3) : Color.red, lineWidth: 1)
-                            )
-                            .cornerRadius(25)
-                        }
-                        
-                        // 出生日期选择器
-                        VStack(alignment: .leading, spacing: 8) {
-                            Button(action: {
-                                showDatePicker = true
-                            }) {
-                                HStack {
-                                    Text(birthDate.formatted(date: .abbreviated, time: .omitted))
-                                        .font(.system(size: 16))
-                                        .foregroundColor(.black)
-                                    Spacer()
-                                    Image(systemName: "calendar")
-                                        .foregroundColor(Color(hex: "9ecd57"))
-                                }
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 15)
-                                .background(Color.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                )
-                                .cornerRadius(25)
-                            }
-                        }
-                        
-                        // 用户类型显示
                         HStack {
-                            Text("用户类型: \(calculateUserType().rawValue)")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(hex: "9ecd57"))
-                            Spacer()
+                            Image(systemName: "lock.fill")
+                                .foregroundColor(.gray)
+                                .frame(width: 20)
+                            SecureField("确认密码", text: $confirmPassword)
+                                .textFieldStyle(PlainTextFieldStyle())
                         }
-                        .padding(.horizontal, 20)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                        
+                        // 出生日期选择
+                        Button(action: {
+                            showDatePicker = true
+                        }) {
+                            HStack {
+                                Image(systemName: "calendar")
+                                    .foregroundColor(.gray)
+                                    .frame(width: 20)
+                                if showDatePicker || birthDate != Date() {
+                                    Text(formatDate(birthDate))
+                                        .foregroundColor(.black)
+                                } else {
+                                    Text("选择出生日期")
+                                        .foregroundColor(.gray)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.down")
+                                    .foregroundColor(.gray)
+                                    .font(.caption)
+                            }
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                        }
+                        .sheet(isPresented: $showDatePicker) {
+                            DatePickerView(selectedDate: $birthDate, showDatePicker: $showDatePicker)
+                        }
                     }
                     .padding(.horizontal, 30)
                     
                     // 注册按钮
                     Button(action: {
-                        handleRegister()
+                        registerUser()
                     }) {
                         Text("注册")
+                            .font(.headline)
                             .foregroundColor(.white)
-                            .font(.system(size: 16, weight: .medium))
                             .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(isFormValid() ? Color(hex: "9ecd57") : Color.gray)
-                            .cornerRadius(25)
+                            .padding()
+                            .background(Color(hex: "9ecd57"))
+                            .cornerRadius(10)
                     }
-                    .disabled(!isFormValid())
                     .padding(.horizontal, 30)
-                    .padding(.bottom, 60)
+                    .disabled(nickname.isEmpty || phoneNumber.isEmpty || password.isEmpty || confirmPassword.isEmpty)
+                    .opacity(nickname.isEmpty || phoneNumber.isEmpty || password.isEmpty || confirmPassword.isEmpty ? 0.6 : 1.0)
                 }
+                
+                Spacer()
             }
         }
-        .sheet(isPresented: $showDatePicker) {
-            DatePicker("选择出生日期", selection: $birthDate, displayedComponents: .date)
-                .datePickerStyle(.wheel)
-                .presentationDetents([.medium])
+        .navigationBarHidden(true)
+        .alert("提示", isPresented: $showAlert) {
+            Button("确定") { }
+        } message: {
+            Text(alertMessage)
         }
         .fullScreenCover(isPresented: $showMainView) {
             MainView()
         }
     }
     
-    private func calculateUserType() -> UserType {
-        let calendar = Calendar.current
-        let age = calendar.dateComponents([.year], from: birthDate, to: Date()).year ?? 0
-        return age >= 18 ? .parent : .child
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy年MM月dd日"
+        return formatter.string(from: date)
     }
     
-    private func isFormValid() -> Bool {
-        return !nickname.isEmpty &&
-               !phoneNumber.isEmpty &&
-               !password.isEmpty &&
-               password == confirmPassword &&
-               password.count >= 6
-    }
-    
-    private func handleRegister() {
-        userType = calculateUserType()
+    private func registerUser() {
+        // 验证输入
+        guard validateInput() else { return }
         
-        // 这里实现注册逻辑
-        // 保存用户信息到数据库（密码需要MD5加密）
-        let hashedPassword = password.md5
+        // 根据出生日期判断用户类型
+        let age = Calendar.current.dateComponents([.year], from: birthDate, to: Date()).year ?? 0
+        let userType = age >= 18 ? "家长" : "儿童"
         
-        // 模拟保存用户数据
+        // MD5加密密码
+        let encryptedPassword = md5Hash(password)
+        
+        // 保存用户数据
         let userData: [String: Any] = [
             "nickname": nickname,
             "phoneNumber": phoneNumber,
-            "password": hashedPassword,
-            "birthDate": birthDate,
-            "userType": userType.rawValue
+            "password": encryptedPassword,
+            "birthDate": birthDate.timeIntervalSince1970,
+            "userType": userType,
+            "isWeChatUser": false
         ]
         
-        // 保存到UserDefaults（实际应用中应该保存到数据库）
         UserDefaults.standard.set(userData, forKey: "userData_\(phoneNumber)")
         
-        // 注册成功，跳转到主界面
+        // 设置当前用户
+        UserManager.shared.loginUser(phoneNumber: phoneNumber, userData: userData)
+        
         showMainView = true
+    }
+    
+    private func validateInput() -> Bool {
+        if nickname.isEmpty {
+            alertMessage = "请输入昵称"
+            showAlert = true
+            return false
+        }
+        
+        if phoneNumber.isEmpty || phoneNumber.count != 11 {
+            alertMessage = "请输入正确的手机号"
+            showAlert = true
+            return false
+        }
+        
+        if password.isEmpty || password.count < 6 {
+            alertMessage = "密码至少6位"
+            showAlert = true
+            return false
+        }
+        
+        if password != confirmPassword {
+            alertMessage = "两次密码输入不一致"
+            showAlert = true
+            return false
+        }
+        
+        // 检查手机号是否已存在
+        if UserDefaults.standard.dictionary(forKey: "userData_\(phoneNumber)") != nil {
+            alertMessage = "该手机号已注册"
+            showAlert = true
+            return false
+        }
+        
+        return true
+    }
+    
+    private func md5Hash(_ string: String) -> String {
+        let digest = Insecure.MD5.hash(data: string.data(using: .utf8) ?? Data())
+        return digest.map { String(format: "%02hhx", $0) }.joined()
     }
 }
 
-// MD5扩展
-extension String {
-    var md5: String {
-        // 简化的MD5实现（实际应用中应使用CryptoKit）
-        return self.data(using: .utf8)?.base64EncodedString() ?? ""
+struct DatePickerView: View {
+    @Binding var selectedDate: Date
+    @Binding var showDatePicker: Bool
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                DatePicker("选择出生日期", selection: $selectedDate, in: ...Date(), displayedComponents: .date)
+                    .datePickerStyle(WheelDatePickerStyle())
+                    .labelsHidden()
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("选择出生日期")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完成") {
+                        showDatePicker = false
+                    }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        showDatePicker = false
+                    }
+                }
+            }
+        }
     }
 }
 
