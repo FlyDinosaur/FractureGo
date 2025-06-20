@@ -8,18 +8,23 @@
 import SwiftUI
 
 struct HandLevelView: View {
-    @State private var completedLevels: Set<Int> = [1] // 默认第一关已解锁
+    @State private var completedLevels: Set<Int> = [] // 只有第一关解锁，没有完成
     private let handColor = Color(red: 1.0, green: 0.706, blue: 0.694) // #ffb4b1
     
     var body: some View {
         ZStack {
-            // 背景图片
+            // 1. 最底层：米白色背景确保不是黑色
+            Color(hex: "f5f5f0")
+                .ignoresSafeArea(.all)
+            
+            // 2. level_background背景图片
             Image("level_background")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
+                .ignoresSafeArea(.all)
             
+            // 3. 关卡内容层 - 占据整个屏幕
             GeometryReader { geometry in
                 ZStack {
                     // S形曲线路径
@@ -34,75 +39,40 @@ struct HandLevelView: View {
                         color: handColor
                     )
                     
-                    // 吉祥物图片 - 右下角
+                    // 吉祥物图片 - 左下角，放大3倍
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Image("mascot")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 300, height: 300) // 从100放大到300 (3倍)
+                                .padding(.leading, 30)
+                                .padding(.bottom, 120)
+                            Spacer()
+                        }
+                    }
+                    
+                    // 礼品盒 - 一开始就显示在右下角
                     VStack {
                         Spacer()
                         HStack {
                             Spacer()
-                            Image("mascot")
+                            Image("gift")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 80, height: 80)
-                                .padding(.trailing, 20)
-                                .padding(.bottom, 100) // 在底部导航栏之上
+                                .padding(.trailing, 30)
+                                .padding(.bottom, 140)
                         }
-                    }
-                    
-                    // 礼品盒（所有关卡完成后显示）
-                    if completedLevels.count >= 8 {
-                        GiftBoxView(geometry: geometry)
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 50)
-            .padding(.bottom, 50)
-            
-            // 顶部遮挡视图
-            TopBlurView()
+            .frame(maxWidth: .infinity, maxHeight: .infinity) // 确保占据整个屏幕
+            .ignoresSafeArea(.all) // 忽略所有安全区域
         }
-    }
-}
-
-// 自定义S形曲线路径
-struct LevelCurvePath: Shape {
-    let color: Color
-    
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        
-        let width = rect.width
-        let height = rect.height
-        
-        // 起点
-        path.move(to: CGPoint(x: width * 0.2, y: height * 0.1))
-        
-        // 创建S形曲线，参考curve.svg的扭曲效果
-        path.addCurve(
-            to: CGPoint(x: width * 0.8, y: height * 0.3),
-            control1: CGPoint(x: width * 0.5, y: height * 0.05),
-            control2: CGPoint(x: width * 0.9, y: height * 0.2)
-        )
-        
-        path.addCurve(
-            to: CGPoint(x: width * 0.3, y: height * 0.5),
-            control1: CGPoint(x: width * 0.7, y: height * 0.4),
-            control2: CGPoint(x: width * 0.1, y: height * 0.45)
-        )
-        
-        path.addCurve(
-            to: CGPoint(x: width * 0.85, y: height * 0.7),
-            control1: CGPoint(x: width * 0.6, y: height * 0.55),
-            control2: CGPoint(x: width * 0.95, y: height * 0.6)
-        )
-        
-        path.addCurve(
-            to: CGPoint(x: width * 0.2, y: height * 0.9),
-            control1: CGPoint(x: width * 0.7, y: height * 0.8),
-            control2: CGPoint(x: width * 0.0, y: height * 0.85)
-        )
-        
-        return path
+        .navigationBarHidden(true)
+        .background(Color(hex: "f5f5f0")) // 额外的背景保证
     }
 }
 
@@ -118,14 +88,14 @@ struct HandLevelButtonsView: View {
         let height = geometry.size.height
         
         return [
-            CGPoint(x: width * 0.2, y: height * 0.1),   // 关卡1
-            CGPoint(x: width * 0.65, y: height * 0.25),  // 关卡2
-            CGPoint(x: width * 0.8, y: height * 0.3),   // 关卡3
-            CGPoint(x: width * 0.4, y: height * 0.45),  // 关卡4
-            CGPoint(x: width * 0.3, y: height * 0.5),   // 关卡5
-            CGPoint(x: width * 0.7, y: height * 0.65),  // 关卡6
-            CGPoint(x: width * 0.85, y: height * 0.7),  // 关卡7
-            CGPoint(x: width * 0.2, y: height * 0.9)    // 关卡8
+            CGPoint(x: width * 0.15, y: height * 0.15),   // 关卡1 - 曲线起点
+            CGPoint(x: width * 0.45, y: height * 0.18),   // 关卡2 - 第一段曲线上
+            CGPoint(x: width * 0.75, y: height * 0.25),   // 关卡3 - 第一段曲线末端
+            CGPoint(x: width * 0.85, y: height * 0.32),   // 关卡4 - 转折点
+            CGPoint(x: width * 0.55, y: height * 0.45),   // 关卡5 - 第二段曲线中
+            CGPoint(x: width * 0.25, y: height * 0.55),   // 关卡6 - 第二段曲线末端
+            CGPoint(x: width * 0.55, y: height * 0.68),   // 关卡7 - 第三段曲线中
+            CGPoint(x: width * 0.85, y: height * 0.78),   // 关卡8 - 第三段曲线末端
         ]
     }
     
@@ -148,8 +118,8 @@ struct HandLevelButtonsView: View {
     }
     
     private func isLevelUnlocked(_ level: Int) -> Bool {
-        if level == 1 { return true }
-        return completedLevels.contains(level - 1)
+        if level == 1 { return true } // 第一关默认解锁
+        return completedLevels.contains(level - 1) // 前一关完成才能解锁下一关
     }
     
     private func handleLevelTap(_ level: Int) {
@@ -159,123 +129,6 @@ struct HandLevelButtonsView: View {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
             completedLevels.insert(level)
         }
-    }
-}
-
-// 关卡按钮
-struct LevelButton: View {
-    let level: Int
-    let isUnlocked: Bool
-    let isCompleted: Bool
-    let color: Color
-    let action: () -> Void
-    
-    @State private var isPressed = false
-    
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                // 按钮背景
-                Circle()
-                    .fill(buttonBackgroundColor)
-                    .frame(width: 50, height: 50)
-                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
-                    .scaleEffect(isPressed ? 0.95 : 1.0)
-                
-                // 按钮内容
-                if isUnlocked {
-                    if isCompleted {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.white)
-                    } else {
-                        Text("\(level)")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                } else {
-                    Image("lock")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 24, height: 24)
-                        .foregroundColor(.white)
-                }
-            }
-        }
-        .disabled(!isUnlocked)
-        .pressEvents {
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = true
-            }
-        } onRelease: {
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = false
-            }
-        }
-        .scaleEffect(isCompleted ? 1.1 : 1.0)
-        .animation(.spring(response: 0.5, dampingFraction: 0.6), value: isCompleted)
-    }
-    
-    private var buttonBackgroundColor: Color {
-        if !isUnlocked {
-            return Color.gray.opacity(0.6)
-        } else if isCompleted {
-            return color.opacity(0.9)
-        } else {
-            return color.opacity(0.7)
-        }
-    }
-}
-
-// 礼品盒视图
-struct GiftBoxView: View {
-    let geometry: GeometryProxy
-    @State private var isAnimating = false
-    
-    var body: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-                Image("gift")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 60, height: 60)
-                    .rotationEffect(.degrees(isAnimating ? 5 : -5))
-                    .animation(
-                        Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true),
-                        value: isAnimating
-                    )
-                    .onAppear {
-                        isAnimating = true
-                    }
-                Spacer()
-            }
-            .padding(.bottom, 20)
-        }
-    }
-}
-
-// 按钮按压效果扩展
-extension View {
-    func pressEvents(onPress: @escaping () -> Void, onRelease: @escaping () -> Void) -> some View {
-        self.modifier(PressEventsModifier(onPress: onPress, onRelease: onRelease))
-    }
-}
-
-struct PressEventsModifier: ViewModifier {
-    let onPress: () -> Void
-    let onRelease: () -> Void
-    
-    func body(content: Content) -> some View {
-        content
-            .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-                if pressing {
-                    onPress()
-                } else {
-                    onRelease()
-                }
-            }, perform: {})
     }
 }
 

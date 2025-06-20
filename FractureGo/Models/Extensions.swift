@@ -49,4 +49,24 @@ extension View {
     func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
+    
+    func pressEvents(onPress: @escaping () -> Void, onRelease: @escaping () -> Void) -> some View {
+        self.modifier(PressEventsModifier(onPress: onPress, onRelease: onRelease))
+    }
+}
+
+struct PressEventsModifier: ViewModifier {
+    let onPress: () -> Void
+    let onRelease: () -> Void
+    
+    func body(content: Content) -> some View {
+        content
+            .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
+                if pressing {
+                    onPress()
+                } else {
+                    onRelease()
+                }
+            }, perform: {})
+    }
 } 
