@@ -110,6 +110,19 @@ struct LoginView: View {
         } message: {
             Text(alertMessage)
         }
+        .onAppear {
+            // 测试服务器连接
+            userManager.testServerConnection { success, message in
+                DispatchQueue.main.async {
+                    if !success {
+                        print("⚠️ 服务器连接测试失败: \(message)")
+                        // 不再自动显示错误弹窗，用户在登录时会得到具体的错误信息
+                    } else {
+                        print("✅ 服务器连接测试成功: \(message)")
+                    }
+                }
+            }
+        }
     }
 }
 

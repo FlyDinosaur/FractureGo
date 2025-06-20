@@ -14,6 +14,9 @@ class UserManager: ObservableObject {
     @Published var isLoggedIn = false
     @Published var currentUser: UserData?
     
+    // 网络服务
+    private let networkService = NetworkService.shared
+    
     // 保存密码功能
     var savePassword: Bool {
         get {
@@ -55,12 +58,38 @@ class UserManager: ObservableObject {
         isLoggedIn = true
     }
     
-    func validateLogin(phone: String, password: String) -> Bool {
-        guard let userData = UserDefaults.standard.dictionary(forKey: "userData_\(phone)"),
-              let savedPassword = userData["password"] as? String else {
-            return false
+    // 使用网络服务进行登录验证
+    func validateLogin(phone: String, password: String, completion: @escaping (Bool, String?) -> Void) {
+        networkService.login(phoneNumber: phone, password: password) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let authResponse):
+                    // 登录成功，更新用户信息
+                    self?.updateCurrentUser(from: authResponse.user)
+                    self?.isLoggedIn = true
+                    completion(true, nil)
+                case .failure(let error):
+                    completion(false, error.localizedDescription)
+                }
+            }
         }
-        return savedPassword == password
+    }
+    
+    // 从网络响应更新当前用户信息
+    private func updateCurrentUser(from networkUser: User) {
+        let dateFormatter = ISO8601DateFormatter()
+        let birthDate = dateFormatter.date(from: networkUser.birthDate) ?? Date()
+        
+        currentUser = UserData(
+            nickname: networkUser.nickname,
+            phoneNumber: networkUser.phoneNumber,
+            userType: networkUser.userType,
+            birthDate: birthDate,
+            isWeChatUser: networkUser.isWeChatUser,
+            wechatOpenId: nil, // 服务端不返回敏感信息
+            wechatNickname: networkUser.wechatNickname,
+            wechatAvatarUrl: networkUser.wechatAvatarUrl
+        )
     }
     
     func saveUserSession(phone: String, password: String, savePassword: Bool) {
@@ -214,5 +243,12 @@ class UserManager: ObservableObject {
         
         print("微信用户绑定并登录成功")
         return true
+    }
+    
+    // 测试服务器连接
+    func testServerConnection(completion: @escaping (Bool, String) -> Void) {
+        DatabaseConfig.shared.healthCheck { success, message in
+            completion(success, message)
+        }
     }
 } 

@@ -230,24 +230,28 @@ struct RegisterView: View {
         let age = Calendar.current.dateComponents([.year], from: birthDate, to: Date()).year ?? 0
         let userType = age >= 18 ? "家长" : "儿童"
         
-        // MD5加密密码 - 使用String扩展的md5属性
-        let encryptedPassword = password.md5
-        
-        // 保存用户数据
-        let userData: [String: Any] = [
-            "nickname": nickname,
-            "phoneNumber": phoneNumber,
-            "password": encryptedPassword,
-            "birthDate": birthDate.timeIntervalSince1970,
-            "userType": userType,
-            "isWeChatUser": false
-        ]
-        
-        UserDefaults.standard.set(userData, forKey: "userData_\(phoneNumber)")
-        
-        print("注册成功，准备返回登录界面")
-        alertMessage = "注册成功！请返回登录页面进行登录。"
-        showAlert = true
+        // 使用网络服务进行注册
+        NetworkService.shared.register(
+            phoneNumber: phoneNumber,
+            password: password,
+            nickname: nickname,
+            userType: userType,
+            birthDate: birthDate,
+            isWeChatUser: false
+        ) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(_):
+                    print("注册成功，准备返回登录界面")
+                    alertMessage = "注册成功！请返回登录页面进行登录。"
+                    showAlert = true
+                case .failure(let error):
+                    print("注册失败: \(error.localizedDescription)")
+                    alertMessage = error.localizedDescription
+                    showAlert = true
+                }
+            }
+        }
     }
     
     private func validateInput() -> Bool {
@@ -274,13 +278,7 @@ struct RegisterView: View {
             return false
         }
         
-        // 检查手机号是否已经注册
-        if UserDefaults.standard.dictionary(forKey: "userData_\(phoneNumber)") != nil {
-            print("手机号已经注册")
-            alertMessage = "该手机号已经注册，请直接登录"
-            showAlert = true
-            return false
-        }
+        // 手机号重复检查由服务器端处理，这里只做格式验证
         
         if password.isEmpty || password.count < 6 {
             print("密码无效，长度: \(password.count)")

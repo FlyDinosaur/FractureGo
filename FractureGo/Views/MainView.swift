@@ -156,8 +156,7 @@ struct TabBarItem: View {
 // 卡片列表视图
 struct CardListView: View {
     var body: some View {
-        VStack(spacing: 20) {
-            Spacer(minLength: 10)
+        VStack(spacing: 40) {
             
             // 卡片1 - 手部训练
             NavigationLink(destination: HandLevelView()) {

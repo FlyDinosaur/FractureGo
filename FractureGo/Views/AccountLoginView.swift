@@ -206,22 +206,23 @@ struct AccountLoginView: View {
             return
         }
         
-        // MD5加密密码
-        let hashedPassword = password.md5
-        
-        // 模拟登录验证
-        if UserManager.shared.validateLogin(phone: phoneNumber, password: hashedPassword) {
-            // 登录成功
-            UserManager.shared.saveUserSession(
-                phone: phoneNumber,
-                password: password, // 保存原始密码，用于自动填充
-                savePassword: savePassword
-            )
-            
-            showMainView = true
-        } else {
-            alertMessage = "手机号或密码错误"
-            showAlert = true
+        // 使用网络服务进行登录验证
+        UserManager.shared.validateLogin(phone: phoneNumber, password: password) { [self] success, errorMessage in
+            DispatchQueue.main.async {
+                if success {
+                    // 登录成功
+                    UserManager.shared.saveUserSession(
+                        phone: phoneNumber,
+                        password: password, // 保存原始密码，用于自动填充
+                        savePassword: savePassword
+                    )
+                    
+                    showMainView = true
+                } else {
+                    alertMessage = errorMessage ?? "登录失败，请检查网络连接"
+                    showAlert = true
+                }
+            }
         }
     }
     
