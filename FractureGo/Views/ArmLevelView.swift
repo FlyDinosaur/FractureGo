@@ -8,125 +8,114 @@
 import SwiftUI
 
 struct ArmLevelView: View {
-    @State private var currentLevel = 1 // 当前解锁关卡
-    @State private var completedLevels: Set<Int> = [1] // 已完成的关卡
-    @Environment(\.presentationMode) var presentationMode
-    
-    private let themeColor = Color(hex: "9ecd57") // 手臂恢复主题色
-    private let totalLevels = 8
+    @State private var completedLevels: Set<Int> = [1] // 默认第一关已解锁
+    private let armColor = Color(red: 0.62, green: 0.804, blue: 0.341) // #9ecd57
     
     var body: some View {
         ZStack {
             // 背景图片
             Image("level_background")
                 .resizable()
-                .ignoresSafeArea()
+                .aspectRatio(contentMode: .fill)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
             
-            VStack(spacing: 0) {
-                // 顶部模糊视图
-                TopBlurView()
-                
-                Spacer()
-                
-                // 关卡内容
+            GeometryReader { geometry in
                 ZStack {
-                    // 曲线路径
-                    LevelCurvePath(themeColor: themeColor, totalLevels: totalLevels)
+                    // S形曲线路径
+                    LevelCurvePath(color: armColor)
+                        .stroke(armColor, lineWidth: 8)
+                        .shadow(color: armColor.opacity(0.3), radius: 5, x: 0, y: 2)
                     
                     // 关卡按钮
                     ArmLevelButtonsView(
-                        currentLevel: $currentLevel,
                         completedLevels: $completedLevels,
-                        themeColor: themeColor,
-                        totalLevels: totalLevels
+                        geometry: geometry,
+                        color: armColor
                     )
                     
-                    // 左下角吉祥物
+                    // 吉祥物图片 - 右下角
                     VStack {
                         Spacer()
                         HStack {
+                            Spacer()
                             Image("mascot")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 80, height: 100)
-                                .padding(.leading, 20)
-                                .padding(.bottom, 100) // 导航栏上方
-                            Spacer()
+                                .frame(width: 80, height: 80)
+                                .padding(.trailing, 20)
+                                .padding(.bottom, 100) // 在底部导航栏之上
                         }
                     }
                     
-                    // 礼品盒（在最后）
-                    if completedLevels.count == totalLevels {
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                GiftBoxView()
-                                    .padding(.trailing, 40)
-                                    .padding(.bottom, 200)
-                            }
-                        }
+                    // 礼品盒（所有关卡完成后显示）
+                    if completedLevels.count >= 8 {
+                        GiftBoxView(geometry: geometry)
                     }
                 }
-                .padding(.horizontal, 20)
-                
-                Spacer()
-                
-                // 底部导航栏
-                BottomNavigationView()
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 50)
+            .padding(.bottom, 50)
+            
+            // 顶部遮挡视图
+            TopBlurView()
         }
-        .navigationBarHidden(true)
     }
 }
 
-// MARK: - 手臂关卡按钮视图
+// 手臂关卡按钮视图
 struct ArmLevelButtonsView: View {
-    @Binding var currentLevel: Int
     @Binding var completedLevels: Set<Int>
-    let themeColor: Color
-    let totalLevels: Int
+    let geometry: GeometryProxy
+    let color: Color
+    
+    // 8个关卡的位置，沿着S形曲线分布
+    private var levelPositions: [CGPoint] {
+        let width = geometry.size.width
+        let height = geometry.size.height
+        
+        return [
+            CGPoint(x: width * 0.2, y: height * 0.1),   // 关卡1
+            CGPoint(x: width * 0.65, y: height * 0.25),  // 关卡2
+            CGPoint(x: width * 0.8, y: height * 0.3),   // 关卡3
+            CGPoint(x: width * 0.4, y: height * 0.45),  // 关卡4
+            CGPoint(x: width * 0.3, y: height * 0.5),   // 关卡5
+            CGPoint(x: width * 0.7, y: height * 0.65),  // 关卡6
+            CGPoint(x: width * 0.85, y: height * 0.7),  // 关卡7
+            CGPoint(x: width * 0.2, y: height * 0.9)    // 关卡8
+        ]
+    }
     
     var body: some View {
-        GeometryReader { geometry in
-            ForEach(1...totalLevels, id: \.self) { level in
-                LevelButton(
-                    level: level,
-                    isUnlocked: level <= currentLevel,
-                    isCompleted: completedLevels.contains(level),
-                    themeColor: themeColor,
-                    position: calculatePosition(for: level, in: geometry)
-                ) {
-                    // 关卡点击处理
-                    if level <= currentLevel {
-                        playArmLevel(level)
-                    }
-                }
+        ForEach(1...8, id: \.self) { level in
+            let position = levelPositions[level - 1]
+            let isUnlocked = isLevelUnlocked(level)
+            let isCompleted = completedLevels.contains(level)
+            
+            LevelButton(
+                level: level,
+                isUnlocked: isUnlocked,
+                isCompleted: isCompleted,
+                color: color
+            ) {
+                handleLevelTap(level)
             }
+            .position(position)
         }
     }
     
-    private func calculatePosition(for level: Int, in geometry: GeometryProxy) -> CGPoint {
-        let width = geometry.size.width
-        let height = geometry.size.height
-        let levelSpacing = height / CGFloat(totalLevels + 1)
-        
-        let y = levelSpacing * CGFloat(level)
-        let x = level % 2 == 1 ? width * 0.8 : width * 0.2
-        
-        return CGPoint(x: x, y: y)
+    private func isLevelUnlocked(_ level: Int) -> Bool {
+        if level == 1 { return true }
+        return completedLevels.contains(level - 1)
     }
     
-    private func playArmLevel(_ level: Int) {
-        // 这里实现手臂训练关卡游戏逻辑
-        print("开始手臂训练第 \(level) 关")
+    private func handleLevelTap(_ level: Int) {
+        guard isLevelUnlocked(level) else { return }
         
-        // 模拟通关
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        // 模拟训练完成
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
             completedLevels.insert(level)
-            if level < totalLevels {
-                currentLevel = max(currentLevel, level + 1)
-            }
         }
     }
 }
