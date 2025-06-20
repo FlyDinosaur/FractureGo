@@ -8,72 +8,126 @@
 import SwiftUI
 
 struct ArmLevelView: View {
+    @State private var currentLevel = 1 // 当前解锁关卡
+    @State private var completedLevels: Set<Int> = [1] // 已完成的关卡
+    @Environment(\.presentationMode) var presentationMode
+    
+    private let themeColor = Color(hex: "9ecd57") // 手臂恢复主题色
+    private let totalLevels = 8
+    
     var body: some View {
         ZStack {
-            // 背景
-            Color(hex: "f5f5f0").ignoresSafeArea()
+            // 背景图片
+            Image("level_background")
+                .resizable()
+                .ignoresSafeArea()
             
-            VStack {
-                // 返回按钮
-                HStack {
-                    Button(action: {
-                        // 返回上一级
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .font(.title2)
-                            .foregroundColor(.black)
-                    }
-                    Spacer()
-                }
-                .padding()
+            VStack(spacing: 0) {
+                // 顶部模糊视图
+                TopBlurView()
                 
                 Spacer()
                 
-                // 手臂训练内容
-                VStack(spacing: 20) {
-                    Text("手臂训练")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.black)
+                // 关卡内容
+                ZStack {
+                    // 曲线路径
+                    LevelCurvePath(themeColor: themeColor, totalLevels: totalLevels)
                     
-                    Text("选择适合的训练等级")
-                        .font(.body)
-                        .foregroundColor(.gray)
+                    // 关卡按钮
+                    ArmLevelButtonsView(
+                        currentLevel: $currentLevel,
+                        completedLevels: $completedLevels,
+                        themeColor: themeColor,
+                        totalLevels: totalLevels
+                    )
                     
-                    // 训练等级列表
-                    VStack(spacing: 15) {
-                        ForEach(1...5, id: \.self) { level in
-                            Button(action: {
-                                // 进入对应等级训练
-                            }) {
-                                HStack {
-                                    Image(systemName: "figure.arms.open")
-                                        .font(.title2)
-                                        .foregroundColor(Color(hex: "FFB8A9"))
-                                    
-                                    Text("等级 \(level)")
-                                        .font(.headline)
-                                        .foregroundColor(.black)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
-                                }
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(12)
-                                .shadow(color: .gray.opacity(0.3), radius: 5, x: 0, y: 2)
+                    // 左下角吉祥物
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Image("mascot")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 80, height: 100)
+                                .padding(.leading, 20)
+                                .padding(.bottom, 100) // 导航栏上方
+                            Spacer()
+                        }
+                    }
+                    
+                    // 礼品盒（在最后）
+                    if completedLevels.count == totalLevels {
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Spacer()
+                                GiftBoxView()
+                                    .padding(.trailing, 40)
+                                    .padding(.bottom, 200)
                             }
                         }
                     }
-                    .padding(.horizontal)
                 }
+                .padding(.horizontal, 20)
                 
                 Spacer()
+                
+                // 底部导航栏
+                BottomNavigationView()
             }
         }
         .navigationBarHidden(true)
+    }
+}
+
+// MARK: - 手臂关卡按钮视图
+struct ArmLevelButtonsView: View {
+    @Binding var currentLevel: Int
+    @Binding var completedLevels: Set<Int>
+    let themeColor: Color
+    let totalLevels: Int
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ForEach(1...totalLevels, id: \.self) { level in
+                LevelButton(
+                    level: level,
+                    isUnlocked: level <= currentLevel,
+                    isCompleted: completedLevels.contains(level),
+                    themeColor: themeColor,
+                    position: calculatePosition(for: level, in: geometry)
+                ) {
+                    // 关卡点击处理
+                    if level <= currentLevel {
+                        playArmLevel(level)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func calculatePosition(for level: Int, in geometry: GeometryProxy) -> CGPoint {
+        let width = geometry.size.width
+        let height = geometry.size.height
+        let levelSpacing = height / CGFloat(totalLevels + 1)
+        
+        let y = levelSpacing * CGFloat(level)
+        let x = level % 2 == 1 ? width * 0.8 : width * 0.2
+        
+        return CGPoint(x: x, y: y)
+    }
+    
+    private func playArmLevel(_ level: Int) {
+        // 这里实现手臂训练关卡游戏逻辑
+        print("开始手臂训练第 \(level) 关")
+        
+        // 模拟通关
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            completedLevels.insert(level)
+            if level < totalLevels {
+                currentLevel = max(currentLevel, level + 1)
+            }
+        }
     }
 }
 

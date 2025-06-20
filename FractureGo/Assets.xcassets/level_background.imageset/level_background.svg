@@ -1,0 +1,13 @@
+<svg width="375" height="812" viewBox="0 0 375 812" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="375" height="812" fill="#F5F5F0"/>
+<pattern id="bones" patternUnits="userSpaceOnUse" width="60" height="60">
+<g opacity="0.1">
+<path d="M20 20 L40 20 M30 10 L30 30 M20 40 L40 40 M10 30 L50 30" stroke="#D0D0D0" stroke-width="1" fill="none"/>
+<circle cx="15" cy="15" r="3" fill="#E0E0E0"/>
+<circle cx="45" cy="15" r="3" fill="#E0E0E0"/>
+<circle cx="15" cy="45" r="3" fill="#E0E0E0"/>
+<circle cx="45" cy="45" r="3" fill="#E0E0E0"/>
+</g>
+</pattern>
+<rect width="375" height="812" fill="url(#bones)"/>
+</svg> 
