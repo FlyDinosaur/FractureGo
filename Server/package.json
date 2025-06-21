@@ -1,0 +1,49 @@
+{
+  "name": "fracturego-server",
+  "version": "1.0.0",
+  "description": "FractureGo服务端API - 提供用户管理、训练数据存储等功能",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "deploy": "pm2 start ecosystem.config.js",
+    "stop": "pm2 stop fracturego-server",
+    "restart": "pm2 restart fracturego-server",
+    "logs": "pm2 logs fracturego-server",
+    "setup": "npm install && npm run migrate",
+    "migrate": "node src/migrations/migrate.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.6.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "dotenv": "^16.3.1",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  },
+  "keywords": [
+    "fracturego",
+    "medical",
+    "rehabilitation",
+    "api",
+    "nodejs"
+  ],
+  "author": "FlyDinosaur",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+} 
