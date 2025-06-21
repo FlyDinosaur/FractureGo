@@ -10,102 +10,116 @@ import SwiftUI
 struct HandLevelView: View {
     @State private var completedLevels: Set<Int> = [] // 只有第一关解锁，没有完成
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) var presentationMode // 添加系统presentation模式
     private let handColor = Color(red: 1.0, green: 0.706, blue: 0.694) // #ffb4b1
     
     var body: some View {
-        ZStack {
-            // 1. 米白色背景 - 确保完全覆盖整个屏幕
-            Color(hex: "f5f5f0")
-                .ignoresSafeArea(.all)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            // 2. level_background图片 - 延伸填充整个屏幕
-            Image("level_background")
-                .renderingMode(.original)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(
-                    minWidth: UIScreen.main.bounds.width * 1.5,
-                    minHeight: UIScreen.main.bounds.height * 1.5
-                )
-                .opacity(0.25)
-                .clipped()
-                .ignoresSafeArea(.all)
-            
-            GeometryReader { geometry in
-                ZStack {
-                    // 3. S形曲线路径 - 填充闭合部分 + 描边
-                    HandCurvePath(color: handColor)
-                        .fill(handColor)
-                        .overlay(
-                            HandCurvePath(color: handColor)
-                                .stroke(handColor, lineWidth: 6)
+        NavigationView {
+            ZStack {
+                // 1. 米白色背景 - 确保完全覆盖整个屏幕
+                Color(hex: "f5f5f0")
+                    .ignoresSafeArea(.all)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+                // 2. level_background图片 - 延伸填充整个屏幕
+                Image("level_background")
+                    .renderingMode(.original)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(
+                        minWidth: UIScreen.main.bounds.width * 1.5,
+                        minHeight: UIScreen.main.bounds.height * 1.5
+                    )
+                    .opacity(0.25)
+                    .clipped()
+                    .ignoresSafeArea(.all)
+                
+                GeometryReader { geometry in
+                    ZStack {
+                        // 3. S形曲线路径 - 填充闭合部分 + 描边
+                        HandCurvePath(color: handColor)
+                            .fill(handColor)
+                            .overlay(
+                                HandCurvePath(color: handColor)
+                                    .stroke(handColor, lineWidth: 6)
+                            )
+                            .shadow(color: handColor.opacity(0.4), radius: 8, x: 0, y: 3)
+                        
+                        // 4. 关卡按钮（第1关在底部，重新排序）
+                        HandLevelButtonsView(
+                            completedLevels: $completedLevels,
+                            geometry: geometry,
+                            color: handColor
                         )
-                        .shadow(color: handColor.opacity(0.4), radius: 8, x: 0, y: 3)
-                    
-                    // 4. 关卡按钮（第1关在底部，重新排序）
-                    HandLevelButtonsView(
-                        completedLevels: $completedLevels,
-                        geometry: geometry,
-                        color: handColor
-                    )
-                    
-                    // 5. 礼品盒 - 位于线条末尾（路径起点）
-                    HandGiftBoxView(
-                        position: getHandPathEndPosition(in: geometry),
-                        color: handColor
-                    )
+                        
+                        // 5. 礼品盒 - 位于线条末尾（路径起点）
+                        HandGiftBoxView(
+                            position: getHandPathEndPosition(in: geometry),
+                            color: handColor
+                        )
+                    }
                 }
-            }
-            
-            // 6. 吉祥物 - 严格保证在左下角
-            VStack {
-                Spacer()
-                HStack {
-                    Image("mascot")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 280, height: 280)
-                        .padding(.leading, 10)
-                        .padding(.bottom, 20)
+                
+                // 6. 吉祥物 - 严格保证在左下角
+                VStack {
+                    Spacer()
+                    HStack {
+                        Image("mascot")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 280, height: 280)
+                            .padding(.leading, 10)
+                            .padding(.bottom, 20)
+                        Spacer()
+                    }
+                }
+                
+                // 7. TopBlurView - 顶部遮挡 - 确保正确显示
+                VStack {
+                    TopBlurView()
+                        .frame(height: 160)
                     Spacer()
                 }
-            }
-            
-            // 7. TopBlurView - 顶部遮挡
-            TopBlurView()
-        }
-        .safeAreaInset(edge: .top) {
-            // 8. 返回按钮 - 使用safeAreaInset确保显示
-            HStack {
-                Button(action: {
-                    print("返回按钮被点击") // 调试用
-                    dismiss()
-                }) {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.black.opacity(0.8))
-                        .clipShape(Circle())
-                }
-                .padding(.leading, 20)
+                .ignoresSafeArea(edges: .top)
                 
-                Spacer()
+                // 8. 返回按钮 - 使用overlay确保在最上层
+                VStack {
+                    HStack {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                presentationMode.wrappedValue.dismiss()
+                            }
+                        }) {
+                            Image(systemName: "arrow.left")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.black.opacity(0.8))
+                                .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                        }
+                        .padding(.leading, 20)
+                        .padding(.top, 60) // 确保在安全区域内
+                        
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .zIndex(999) // 确保在最上层
             }
-            .padding(.top, 10)
-            .background(Color.clear)
         }
+        .navigationBarHidden(true)
+        .navigationViewStyle(StackNavigationViewStyle()) // 强制使用Stack风格
         .statusBarHidden(false)
         .preferredColorScheme(.light)
-        .simultaneousGesture(
+        .gesture(
+            // 使用系统级右滑返回手势
             DragGesture()
                 .onEnded { value in
-                    // 右滑返回：从左边缘向右滑动超过100像素
-                    print("手势检测: 起始位置x=\(value.startLocation.x), 滑动距离width=\(value.translation.width)")
-                    if value.startLocation.x < 150 && value.translation.width > 100 {
-                        print("右滑返回手势触发") // 调试用
-                        dismiss()
+                    if value.startLocation.x < 20 && value.translation.width > 100 {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }
                 }
         )

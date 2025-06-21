@@ -10,90 +10,107 @@ import SwiftUI
 struct LegLevelView: View {
     @State private var completedLevels: Set<Int> = []
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) var presentationMode
     private let legColor = Color(red: 0.424, green: 0.765, blue: 1.0)
     
     var body: some View {
-        ZStack {
-            Color(hex: "f5f5f0")
-                .ignoresSafeArea(.all)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            Image("level_background")
-                .renderingMode(.original)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(
-                    minWidth: UIScreen.main.bounds.width * 1.5,
-                    minHeight: UIScreen.main.bounds.height * 1.5
-                )
-                .opacity(0.25)
-                .clipped()
-                .ignoresSafeArea(.all)
-            
-            GeometryReader { geometry in
-                ZStack {
-                    LegCurvePath(color: legColor)
-                        .fill(legColor)
-                        .overlay(
-                            LegCurvePath(color: legColor)
-                                .stroke(legColor, lineWidth: 6)
+        NavigationView {
+            ZStack {
+                Color(hex: "f5f5f0")
+                    .ignoresSafeArea(.all)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+                Image("level_background")
+                    .renderingMode(.original)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(
+                        minWidth: UIScreen.main.bounds.width * 1.5,
+                        minHeight: UIScreen.main.bounds.height * 1.5
+                    )
+                    .opacity(0.25)
+                    .clipped()
+                    .ignoresSafeArea(.all)
+                
+                GeometryReader { geometry in
+                    ZStack {
+                        LegCurvePath(color: legColor)
+                            .fill(legColor)
+                            .overlay(
+                                LegCurvePath(color: legColor)
+                                    .stroke(legColor, lineWidth: 6)
+                            )
+                            .shadow(color: legColor.opacity(0.4), radius: 8, x: 0, y: 3)
+                        
+                        LegLevelButtonsView(
+                            completedLevels: $completedLevels,
+                            geometry: geometry,
+                            color: legColor
                         )
-                        .shadow(color: legColor.opacity(0.4), radius: 8, x: 0, y: 3)
-                    
-                    LegLevelButtonsView(
-                        completedLevels: $completedLevels,
-                        geometry: geometry,
-                        color: legColor
-                    )
-                    
-                    LegGiftBoxView(
-                        position: getLegPathEndPosition(in: geometry),
-                        color: legColor
-                    )
+                        
+                        LegGiftBoxView(
+                            position: getLegPathEndPosition(in: geometry),
+                            color: legColor
+                        )
+                    }
                 }
-            }
-            
-            VStack {
-                Spacer()
-                HStack {
-                    Image("mascot")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 280, height: 280)
-                        .padding(.leading, 10)
-                        .padding(.bottom, 20)
+                
+                VStack {
+                    Spacer()
+                    HStack {
+                        Image("mascot")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 280, height: 280)
+                            .padding(.leading, 10)
+                            .padding(.bottom, 20)
+                        Spacer()
+                    }
+                }
+                
+                VStack {
+                    TopBlurView()
+                        .frame(height: 160)
                     Spacer()
                 }
-            }
-            
-            TopBlurView()
-        }
-        .safeAreaInset(edge: .top) {
-            HStack {
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.black.opacity(0.8))
-                        .clipShape(Circle())
-                }
-                .padding(.leading, 20)
+                .ignoresSafeArea(edges: .top)
                 
-                Spacer()
+                VStack {
+                    HStack {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                presentationMode.wrappedValue.dismiss()
+                            }
+                        }) {
+                            Image(systemName: "arrow.left")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.black.opacity(0.8))
+                                .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                        }
+                        .padding(.leading, 20)
+                        .padding(.top, 60)
+                        
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .zIndex(999)
             }
-            .padding(.top, 10)
-            .background(Color.clear)
         }
+        .navigationBarHidden(true)
+        .navigationViewStyle(StackNavigationViewStyle())
         .statusBarHidden(false)
         .preferredColorScheme(.light)
-        .simultaneousGesture(
+        .gesture(
             DragGesture()
                 .onEnded { value in
-                    if value.startLocation.x < 150 && value.translation.width > 100 {
-                        dismiss()
+                    if value.startLocation.x < 20 && value.translation.width > 100 {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }
                 }
         )
