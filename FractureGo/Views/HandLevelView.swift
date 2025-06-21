@@ -15,11 +15,13 @@ struct HandLevelView: View {
         ZStack {
             // 1. 最底层：米白色背景确保不是黑色
             Color(hex: "f5f5f0")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea(.all)
             
             // 2. level_background背景图片 - 完全填充屏幕
             Image("level_background")
                 .resizable()
+                .aspectRatio(contentMode: .fill)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea(.all)
                 .clipped()
@@ -72,6 +74,8 @@ struct HandLevelView: View {
             .ignoresSafeArea(.all) // 忽略所有安全区域
         }
         .navigationBarHidden(true)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
         .background(Color(hex: "f5f5f0")) // 额外的背景保证
     }
 }
