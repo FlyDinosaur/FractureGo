@@ -50,7 +50,7 @@ extension View {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
-    func pressEvents(onPress: @escaping () -> Void, onRelease: @escaping () -> Void) -> some View {
+    func    pressEvents(onPress: @escaping () -> Void, onRelease: @escaping () -> Void) -> some View {
         self.modifier(PressEventsModifier(onPress: onPress, onRelease: onRelease))
     }
 }

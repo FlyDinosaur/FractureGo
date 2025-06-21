@@ -154,38 +154,45 @@ struct TabBarItem: View {
 
 // 卡片列表视图
 struct CardListView: View {
+    @State private var showHandLevel = false
+    @State private var showArmLevel = false
+    @State private var showLegLevel = false
+    
     var body: some View {
         VStack(spacing: 20) {
             
             // 卡片1 - 手部训练
-            NavigationLink(destination: 
-                HandLevelView()
-                    .navigationBarHidden(true)
-                    .ignoresSafeArea(.all)
-            ) {
+            Button(action: {
+                showHandLevel = true
+            }) {
                 CardImageView(imageName: "卡片1", title: "手部训练")
             }
             .buttonStyle(PlainButtonStyle())
+            .fullScreenCover(isPresented: $showHandLevel) {
+                HandLevelView()
+            }
             
             // 卡片2 - 手臂训练
-            NavigationLink(destination: 
-                ArmLevelView()
-                    .navigationBarHidden(true)
-                    .ignoresSafeArea(.all)
-            ) {
+            Button(action: {
+                showArmLevel = true
+            }) {
                 CardImageView(imageName: "卡片2", title: "手臂训练")
             }
             .buttonStyle(PlainButtonStyle())
+            .fullScreenCover(isPresented: $showArmLevel) {
+                ArmLevelView()
+            }
             
             // 卡片3 - 腿部训练
-            NavigationLink(destination: 
-                LegLevelView()
-                    .navigationBarHidden(true)
-                    .ignoresSafeArea(.all)
-            ) {
+            Button(action: {
+                showLegLevel = true
+            }) {
                 CardImageView(imageName: "卡片3", title: "腿部训练")
             }
             .buttonStyle(PlainButtonStyle())
+            .fullScreenCover(isPresented: $showLegLevel) {
+                LegLevelView()
+            }
             
             Spacer()
         }

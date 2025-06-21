@@ -9,102 +9,106 @@ import SwiftUI
 
 struct LegLevelView: View {
     @State private var completedLevels: Set<Int> = [] // 只有第一关解锁，没有完成
-    private let legColor = Color(red: 0.624, green: 0.596, blue: 0.984) // #9f98fb
+    @Environment(\.dismiss) private var dismiss
+    private let legColor = Color(red: 0.424, green: 0.765, blue: 1.0) // #6cc3ff
     
     var body: some View {
         ZStack {
-            // 1. 最底层：米白色背景确保不是黑色
+            // 1. 米白色背景 - 确保完全覆盖整个屏幕
             Color(hex: "f5f5f0")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea(.all)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            // 2. level_background背景图片 - 完全填充屏幕
+            // 2. level_background图片 - 延伸填充整个屏幕
             Image("level_background")
+                .renderingMode(.original)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea(.all)
+                .frame(
+                    minWidth: UIScreen.main.bounds.width * 1.5,
+                    minHeight: UIScreen.main.bounds.height * 1.5
+                )
+                .opacity(0.25)
                 .clipped()
+                .ignoresSafeArea(.all)
             
-            // 3. 关卡内容层 - 占据整个屏幕
             GeometryReader { geometry in
                 ZStack {
-                    // S形曲线路径
-                    LevelCurvePath(color: legColor)
-                        .stroke(legColor, lineWidth: 8)
-                        .shadow(color: legColor.opacity(0.3), radius: 5, x: 0, y: 2)
+                    // 3. 进一步缩小的游戏路径，第1关在底部
+                    CurvePath(color: legColor)
+                        .stroke(legColor, lineWidth: 6)
+                        .shadow(color: legColor.opacity(0.4), radius: 8, x: 0, y: 3)
                     
-                    // 关卡按钮
+                    // 4. 关卡按钮（第1关在底部，重新排序）
                     LegLevelButtonsView(
                         completedLevels: $completedLevels,
                         geometry: geometry,
                         color: legColor
                     )
                     
-                    // 吉祥物图片 - 左下角，放大3倍
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Image("mascot")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 300, height: 300) // 从100放大到300 (3倍)
-                                .padding(.leading, 20)
-                                .padding(.bottom, 100) // 减少底部间距
-                            Spacer()
-                        }
-                    }
-                    
-                    // 礼品盒 - 显示在右下角，靠近底部
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Image("gift")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 80, height: 80)
-                                .padding(.trailing, 20)
-                                .padding(.bottom, 120) // 减少底部间距，让gift更靠近底部
-                        }
-                    }
+                    // 5. 礼品盒（带花型背景）
+                    GiftBoxView(
+                        position: getGiftPosition(in: geometry),
+                        color: legColor
+                    )
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity) // 确保占据整个屏幕
-            .ignoresSafeArea(.all) // 忽略所有安全区域
+            
+            // 6. 吉祥物 - 严格保证在左下角
+            VStack {
+                Spacer()
+                HStack {
+                    Image("mascot")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 280, height: 280)
+                        .padding(.leading, 10)
+                        .padding(.bottom, 20)
+                    Spacer()
+                }
+            }
+            
+            // 7. TopBlurView - 顶部遮挡
+            TopBlurView()
+            
+            // 8. 返回按钮 - 左上角，在TopBlurView之上
+            VStack {
+                HStack {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.black.opacity(0.3))
+                            .clipShape(Circle())
+                    }
+                    .padding(.leading, 20)
+                    .padding(.top, 50)
+                    
+                    Spacer()
+                }
+                
+                Spacer()
+            }
         }
-        .navigationBarHidden(true)
-        .ignoresSafeArea(.all)
-        .background(Color(hex: "f5f5f0")) // 额外的背景保证
+        .statusBarHidden(false)
+        .preferredColorScheme(.light)
     }
 }
 
-// 腿部关卡按钮视图
+// 腿部关卡按钮视图（第1关在底部，重新排序）
 struct LegLevelButtonsView: View {
     @Binding var completedLevels: Set<Int>
     let geometry: GeometryProxy
     let color: Color
     
-    // 8个关卡的位置，沿着S形曲线分布 - 修正坐标让关卡1在顶部
-    private var levelPositions: [CGPoint] {
-        let width = geometry.size.width
-        let height = geometry.size.height
-        
-        return [
-            CGPoint(x: width * 0.15, y: height * 0.08),   // 关卡1 - 顶部起点
-            CGPoint(x: width * 0.45, y: height * 0.12),   // 关卡2 - 第一段曲线上
-            CGPoint(x: width * 0.75, y: height * 0.18),   // 关卡3 - 第一段曲线末端
-            CGPoint(x: width * 0.85, y: height * 0.28),   // 关卡4 - 转折点
-            CGPoint(x: width * 0.55, y: height * 0.42),   // 关卡5 - 第二段曲线中
-            CGPoint(x: width * 0.25, y: height * 0.55),   // 关卡6 - 第二段曲线末端
-            CGPoint(x: width * 0.55, y: height * 0.68),   // 关卡7 - 第三段曲线中
-            CGPoint(x: width * 0.85, y: height * 0.82),   // 关卡8 - 底部末端
-        ]
-    }
-    
     var body: some View {
+        let positions = getLevelPositions(in: geometry)
+        
         ForEach(1...8, id: \.self) { level in
-            let position = levelPositions[level - 1]
+            let position = positions[level - 1]
             let isUnlocked = isLevelUnlocked(level)
             let isCompleted = completedLevels.contains(level)
             
@@ -121,15 +125,14 @@ struct LegLevelButtonsView: View {
     }
     
     private func isLevelUnlocked(_ level: Int) -> Bool {
-        if level == 1 { return true } // 第一关默认解锁
-        return completedLevels.contains(level - 1) // 前一关完成才能解锁下一关
+        if level == 1 { return true }
+        return completedLevels.contains(level - 1)
     }
     
     private func handleLevelTap(_ level: Int) {
         guard isLevelUnlocked(level) else { return }
         
-        // 模拟训练完成
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
+        let _ = withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
             completedLevels.insert(level)
         }
     }
