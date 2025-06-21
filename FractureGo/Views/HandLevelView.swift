@@ -287,23 +287,33 @@ private struct HandLevelButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                // 外圈大背景
+                // 大圆形背景 (半透明背景，不是白色)
                 Circle()
-                    .fill(Color.white.opacity(0.9))
+                    .fill(color.opacity(0.2))
                     .frame(width: 70, height: 70)
-                    .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .overlay(
+                        Circle()
+                            .stroke(color.opacity(0.4), lineWidth: 2)
+                    )
                 
-                // 内圈按钮主体
+                // 按钮主体
                 Circle()
                     .fill(buttonBackgroundColor)
                     .frame(width: 45, height: 45)
-                    .scaleEffect(isPressed ? 0.9 : 1.0)
+                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    .scaleEffect(isPressed ? 0.95 : 1.0)
                 
-                // 关卡数字或锁图标
+                // 按钮内容
                 if isUnlocked {
-                    Text("\(level)")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                    if isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                    } else {
+                        Text("\(level)")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 } else {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 16, weight: .medium))
