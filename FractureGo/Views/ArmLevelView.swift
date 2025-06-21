@@ -34,9 +34,13 @@ struct ArmLevelView: View {
             
             GeometryReader { geometry in
                 ZStack {
-                    // 3. S形曲线路径（基于curve.svg的精确坐标）
-                    CurvePath(color: armColor)
-                        .stroke(armColor, lineWidth: 6)
+                    // 3. S形曲线路径 - 填充闭合部分 + 描边
+                    ArmCurvePath(color: armColor)
+                        .fill(armColor)
+                        .overlay(
+                            ArmCurvePath(color: armColor)
+                                .stroke(armColor, lineWidth: 6)
+                        )
                         .shadow(color: armColor.opacity(0.4), radius: 8, x: 0, y: 3)
                     
                     // 4. 关卡按钮（使用curve.svg的精确位置）
@@ -46,9 +50,9 @@ struct ArmLevelView: View {
                         color: armColor
                     )
                     
-                    // 5. 礼品盒（带花型背景）
-                    GiftBoxView(
-                        position: getGiftPosition(in: geometry),
+                    // 5. 礼品盒 - 位于线条末尾（路径起点）
+                    ArmGiftBoxView(
+                        position: getArmPathEndPosition(in: geometry),
                         color: armColor
                     )
                 }
@@ -70,36 +74,46 @@ struct ArmLevelView: View {
             
             // 7. TopBlurView - 顶部遮挡
             TopBlurView()
-            
-            // 8. 返回按钮 - 左上角，在TopBlurView之上
-            VStack {
-                HStack {
-                    Button(action: {
-                        dismiss()
-                    }) {
-                        Image(systemName: "arrow.left")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.black.opacity(0.3))
-                            .clipShape(Circle())
-                    }
-                    .padding(.leading, 20)
-                    .padding(.top, 50)
-                    
-                    Spacer()
+        }
+        .safeAreaInset(edge: .top) {
+            // 8. 返回按钮 - 使用safeAreaInset确保显示
+            HStack {
+                Button(action: {
+                    print("返回按钮被点击") // 调试用
+                    dismiss()
+                }) {
+                    Image(systemName: "arrow.left")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Color.black.opacity(0.8))
+                        .clipShape(Circle())
                 }
+                .padding(.leading, 20)
                 
                 Spacer()
             }
+            .padding(.top, 10)
+            .background(Color.clear)
         }
         .statusBarHidden(false)
         .preferredColorScheme(.light)
+        .simultaneousGesture(
+            DragGesture()
+                .onEnded { value in
+                    // 右滑返回：从左边缘向右滑动超过100像素
+                    print("手势检测: 起始位置x=\(value.startLocation.x), 滑动距离width=\(value.translation.width)")
+                    if value.startLocation.x < 150 && value.translation.width > 100 {
+                        print("右滑返回手势触发") // 调试用
+                        dismiss()
+                    }
+                }
+        )
     }
 }
 
 // MARK: - 基于MyIcon的完整路径，等比例缩放到页面内
-struct CurvePath: Shape {
+private struct ArmCurvePath: Shape {
     let color: Color
     
     func path(in rect: CGRect) -> Path {
@@ -209,7 +223,7 @@ struct CurvePath: Shape {
 }
 
 // MARK: - 关卡按钮（带圆形背景）
-struct LevelButton: View {
+private struct ArmLevelButton: View {
     let level: Int
     let isUnlocked: Bool
     let isCompleted: Bool
@@ -281,7 +295,7 @@ struct LevelButton: View {
 }
 
 // MARK: - 礼品盒视图（带花型背景）
-struct GiftBoxView: View {
+private struct ArmGiftBoxView: View {
     let position: CGPoint
     let color: Color
     @State private var isAnimating = false
@@ -290,18 +304,18 @@ struct GiftBoxView: View {
     var body: some View {
         ZStack {
             // 花型背景
-            FlowerBackground(color: color)
+            ArmFlowerBackground(color: color)
                 .rotationEffect(.degrees(petalRotation))
                 .animation(
                     .linear(duration: 20.0).repeatForever(autoreverses: false),
                     value: petalRotation
                 )
             
-            // 礼品盒
+            // 礼品盒 - 放大一倍
             Image("gift")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 50, height: 50)
+                .frame(width: 100, height: 100)
                 .scaleEffect(isAnimating ? 1.1 : 1.0)
                 .animation(
                     .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
@@ -317,14 +331,14 @@ struct GiftBoxView: View {
 }
 
 // MARK: - 花型背景
-struct FlowerBackground: View {
+private struct ArmFlowerBackground: View {
     let color: Color
     
     var body: some View {
         ZStack {
             // 8个花瓣
             ForEach(0..<8, id: \.self) { index in
-                Petal()
+                ArmPetal()
                     .fill(color.opacity(0.3))
                     .frame(width: 25, height: 60)
                     .rotationEffect(.degrees(Double(index) * 45))
@@ -340,7 +354,7 @@ struct FlowerBackground: View {
 }
 
 // MARK: - 花瓣形状
-struct Petal: Shape {
+private struct ArmPetal: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         
@@ -364,7 +378,7 @@ struct Petal: Shape {
 }
 
 // MARK: - 获取关卡位置（重新排序，第1关在最底部）
-func getLevelPositions(in geometry: GeometryProxy) -> [CGPoint] {
+private func getArmLevelPositions(in geometry: GeometryProxy) -> [CGPoint] {
     // 应用相同的缩放和偏移参数
     let scale: CGFloat = 0.5
     let offsetX = geometry.size.width * (1 - scale) / 2
@@ -386,8 +400,8 @@ func getLevelPositions(in geometry: GeometryProxy) -> [CGPoint] {
     ]
 }
 
-// MARK: - 礼品位置（在最后一关的花型图案中间）
-func getGiftPosition(in geometry: GeometryProxy) -> CGPoint {
+// MARK: - 礼品盒位置（位于第8关左下方）
+private func getArmPathEndPosition(in geometry: GeometryProxy) -> CGPoint {
     // 应用相同的缩放和偏移参数
     let scale: CGFloat = 0.5
     let offsetX = geometry.size.width * (1 - scale) / 2
@@ -395,8 +409,12 @@ func getGiftPosition(in geometry: GeometryProxy) -> CGPoint {
     let width = geometry.size.width * scale
     let height = geometry.size.height * scale
     
-    // 礼品盒位置：在第8关（最后一关）右上角椭圆的中心，花型图案包围
-    return CGPoint(x: (0.72745 + 0.13385/2)*width + offsetX, y: (0.01362 + 0.08741/2)*height + offsetY)
+    // 第8关位置：(0.72745 + 0.13385/2, 0.01362 + 0.08741/2)
+    // 礼品盒位置：第8关的左下方，距离更远
+    let level8X = (0.72745 + 0.13385/2)*width + offsetX
+    let level8Y = (0.01362 + 0.08741/2)*height + offsetY
+    
+    return CGPoint(x: level8X - 100, y: level8Y + 60) // 更远的左下偏移
 }
 
 // 手臂关卡按钮视图（使用curve.svg的精确位置）
@@ -406,14 +424,14 @@ struct ArmLevelButtonsView: View {
     let color: Color
     
     var body: some View {
-        let positions = getLevelPositions(in: geometry)
+        let positions = getArmLevelPositions(in: geometry)
         
         ForEach(1...8, id: \.self) { level in
             let position = positions[level - 1]
             let isUnlocked = isLevelUnlocked(level)
             let isCompleted = completedLevels.contains(level)
             
-            LevelButton(
+            ArmLevelButton(
                 level: level,
                 isUnlocked: isUnlocked,
                 isCompleted: isCompleted,
