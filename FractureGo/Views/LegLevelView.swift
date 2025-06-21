@@ -14,94 +14,89 @@ struct LegLevelView: View {
     private let legColor = Color(red: 0.424, green: 0.765, blue: 1.0)
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(hex: "f5f5f0")
-                    .ignoresSafeArea(.all)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
-                Image("level_background")
-                    .renderingMode(.original)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(
-                        minWidth: UIScreen.main.bounds.width * 1.5,
-                        minHeight: UIScreen.main.bounds.height * 1.5
+        ZStack {
+            Color(hex: "f5f5f0")
+                .ignoresSafeArea(.all)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            Image("level_background")
+                .renderingMode(.original)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(
+                    minWidth: UIScreen.main.bounds.width * 1.5,
+                    minHeight: UIScreen.main.bounds.height * 1.5
+                )
+                .opacity(0.25)
+                .clipped()
+                .ignoresSafeArea(.all)
+            
+            GeometryReader { geometry in
+                ZStack {
+                    LegCurvePath(color: legColor)
+                        .fill(legColor)
+                        .overlay(
+                            LegCurvePath(color: legColor)
+                                .stroke(legColor, lineWidth: 6)
+                        )
+                        .shadow(color: legColor.opacity(0.4), radius: 8, x: 0, y: 3)
+                    
+                    LegLevelButtonsView(
+                        completedLevels: $completedLevels,
+                        geometry: geometry,
+                        color: legColor
                     )
-                    .opacity(0.25)
-                    .clipped()
-                    .ignoresSafeArea(.all)
-                
-                GeometryReader { geometry in
-                    ZStack {
-                        LegCurvePath(color: legColor)
-                            .fill(legColor)
-                            .overlay(
-                                LegCurvePath(color: legColor)
-                                    .stroke(legColor, lineWidth: 6)
-                            )
-                            .shadow(color: legColor.opacity(0.4), radius: 8, x: 0, y: 3)
-                        
-                        LegLevelButtonsView(
-                            completedLevels: $completedLevels,
-                            geometry: geometry,
-                            color: legColor
-                        )
-                        
-                        LegGiftBoxView(
-                            position: getLegPathEndPosition(in: geometry),
-                            color: legColor
-                        )
-                    }
+                    
+                    LegGiftBoxView(
+                        position: getLegPathEndPosition(in: geometry),
+                        color: legColor
+                    )
                 }
-                
-                VStack {
-                    Spacer()
-                    HStack {
-                        Image("mascot")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 280, height: 280)
-                            .padding(.leading, 10)
-                            .padding(.bottom, 20)
-                        Spacer()
-                    }
-                }
-                
-                VStack {
-                    TopBlurView()
-                        .frame(height: 160)
-                    Spacer()
-                }
-                .ignoresSafeArea(edges: .top)
-                
-                VStack {
-                    HStack {
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                presentationMode.wrappedValue.dismiss()
-                            }
-                        }) {
-                            Image(systemName: "arrow.left")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Color.black.opacity(0.8))
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                        }
-                        .padding(.leading, 20)
-                        .padding(.top, 60)
-                        
-                        Spacer()
-                    }
-                    Spacer()
-                }
-                .zIndex(999)
             }
+            
+            VStack {
+                Spacer()
+                HStack {
+                    Image("mascot")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 280, height: 280)
+                        .padding(.leading, 10)
+                        .padding(.bottom, 20)
+                    Spacer()
+                }
+            }
+            
+            TopBlurView()
+                .frame(height: 160)
+                .ignoresSafeArea(edges: .top)
+                .allowsHitTesting(false)
+            
+            VStack {
+                HStack {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                    }) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.black.opacity(0.8))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    }
+                    .padding(.leading, 20)
+                    .padding(.top, 60)
+                    
+                    Spacer()
+                }
+                Spacer()
+            }
+            .zIndex(1000)
         }
         .navigationBarHidden(true)
-        .navigationViewStyle(StackNavigationViewStyle())
         .statusBarHidden(false)
         .preferredColorScheme(.light)
         .gesture(
@@ -236,7 +231,6 @@ private struct LegLevelButton: View {
 private struct LegGiftBoxView: View {
     let position: CGPoint
     let color: Color
-    @State private var isAnimating = false
     @State private var petalRotation = 0.0
     
     var body: some View {
@@ -248,19 +242,14 @@ private struct LegGiftBoxView: View {
                     value: petalRotation
                 )
             
+            // 礼品盒 - 放大一倍，移除跳动动画
             Image("gift")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 100, height: 100)
-                .scaleEffect(isAnimating ? 1.1 : 1.0)
-                .animation(
-                    .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
-                    value: isAnimating
-                )
         }
         .position(position)
         .onAppear {
-            isAnimating = true
             petalRotation = 360.0
         }
     }

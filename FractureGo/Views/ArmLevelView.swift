@@ -14,102 +14,97 @@ struct ArmLevelView: View {
     private let armColor = Color(red: 0.620, green: 0.804, blue: 0.341) // #9ecd57
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // 1. 米白色背景 - 确保完全覆盖整个屏幕
-                Color(hex: "f5f5f0")
-                    .ignoresSafeArea(.all)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
-                // 2. level_background图片 - 延伸填充整个屏幕
-                Image("level_background")
-                    .renderingMode(.original)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(
-                        minWidth: UIScreen.main.bounds.width * 1.5,
-                        minHeight: UIScreen.main.bounds.height * 1.5
+        ZStack {
+            // 1. 米白色背景 - 确保完全覆盖整个屏幕
+            Color(hex: "f5f5f0")
+                .ignoresSafeArea(.all)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            // 2. level_background图片 - 延伸填充整个屏幕
+            Image("level_background")
+                .renderingMode(.original)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(
+                    minWidth: UIScreen.main.bounds.width * 1.5,
+                    minHeight: UIScreen.main.bounds.height * 1.5
+                )
+                .opacity(0.25)
+                .clipped()
+                .ignoresSafeArea(.all)
+            
+            GeometryReader { geometry in
+                ZStack {
+                    // 3. S形曲线路径 - 填充闭合部分 + 描边
+                    ArmCurvePath(color: armColor)
+                        .fill(armColor)
+                        .overlay(
+                            ArmCurvePath(color: armColor)
+                                .stroke(armColor, lineWidth: 6)
+                        )
+                        .shadow(color: armColor.opacity(0.4), radius: 8, x: 0, y: 3)
+                    
+                    // 4. 关卡按钮（第1关在底部，重新排序）
+                    ArmLevelButtonsView(
+                        completedLevels: $completedLevels,
+                        geometry: geometry,
+                        color: armColor
                     )
-                    .opacity(0.25)
-                    .clipped()
-                    .ignoresSafeArea(.all)
-                
-                GeometryReader { geometry in
-                    ZStack {
-                        // 3. S形曲线路径 - 填充闭合部分 + 描边
-                        ArmCurvePath(color: armColor)
-                            .fill(armColor)
-                            .overlay(
-                                ArmCurvePath(color: armColor)
-                                    .stroke(armColor, lineWidth: 6)
-                            )
-                            .shadow(color: armColor.opacity(0.4), radius: 8, x: 0, y: 3)
-                        
-                        // 4. 关卡按钮（第1关在底部，重新排序）
-                        ArmLevelButtonsView(
-                            completedLevels: $completedLevels,
-                            geometry: geometry,
-                            color: armColor
-                        )
-                        
-                        // 5. 礼品盒 - 位于第8关左下方
-                        ArmGiftBoxView(
-                            position: getArmPathEndPosition(in: geometry),
-                            color: armColor
-                        )
-                    }
+                    
+                    // 5. 礼品盒 - 位于第8关左下方
+                    ArmGiftBoxView(
+                        position: getArmPathEndPosition(in: geometry),
+                        color: armColor
+                    )
                 }
-                
-                // 6. 吉祥物 - 严格保证在左下角
-                VStack {
-                    Spacer()
-                    HStack {
-                        Image("mascot")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 280, height: 280)
-                            .padding(.leading, 10)
-                            .padding(.bottom, 20)
-                        Spacer()
-                    }
-                }
-                
-                // 7. TopBlurView - 顶部遮挡 - 确保正确显示
-                VStack {
-                    TopBlurView()
-                        .frame(height: 160)
-                    Spacer()
-                }
-                .ignoresSafeArea(edges: .top)
-                
-                // 8. 返回按钮 - 使用overlay确保在最上层
-                VStack {
-                    HStack {
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                presentationMode.wrappedValue.dismiss()
-                            }
-                        }) {
-                            Image(systemName: "arrow.left")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Color.black.opacity(0.8))
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                        }
-                        .padding(.leading, 20)
-                        .padding(.top, 60) // 确保在安全区域内
-                        
-                        Spacer()
-                    }
-                    Spacer()
-                }
-                .zIndex(999) // 确保在最上层
             }
+            
+            // 6. 吉祥物 - 严格保证在左下角
+            VStack {
+                Spacer()
+                HStack {
+                    Image("mascot")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 280, height: 280)
+                        .padding(.leading, 10)
+                        .padding(.bottom, 20)
+                    Spacer()
+                }
+            }
+            
+            // 7. TopBlurView - 顶部遮挡 - 正确的图层顺序
+            TopBlurView()
+                .frame(height: 160)
+                .ignoresSafeArea(edges: .top)
+                .allowsHitTesting(false) // 允许点击穿透
+            
+            // 8. 返回按钮 - 确保在最上层
+            VStack {
+                HStack {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                    }) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.black.opacity(0.8))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    }
+                    .padding(.leading, 20)
+                    .padding(.top, 60) // 确保在安全区域内
+                    
+                    Spacer()
+                }
+                Spacer()
+            }
+            .zIndex(1000) // 确保在最上层
         }
         .navigationBarHidden(true)
-        .navigationViewStyle(StackNavigationViewStyle()) // 强制使用Stack风格
         .statusBarHidden(false)
         .preferredColorScheme(.light)
         .gesture(
@@ -312,7 +307,6 @@ private struct ArmLevelButton: View {
 private struct ArmGiftBoxView: View {
     let position: CGPoint
     let color: Color
-    @State private var isAnimating = false
     @State private var petalRotation = 0.0
     
     var body: some View {
@@ -325,20 +319,14 @@ private struct ArmGiftBoxView: View {
                     value: petalRotation
                 )
             
-            // 礼品盒 - 放大一倍
+            // 礼品盒 - 放大一倍，移除跳动动画
             Image("gift")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 100, height: 100)
-                .scaleEffect(isAnimating ? 1.1 : 1.0)
-                .animation(
-                    .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
-                    value: isAnimating
-                )
         }
         .position(position)
         .onAppear {
-            isAnimating = true
             petalRotation = 360.0
         }
     }
