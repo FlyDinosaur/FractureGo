@@ -80,29 +80,6 @@ struct LegLevelView: View {
             .navigationViewStyle(StackNavigationViewStyle())
             .statusBarHidden(false)
             .preferredColorScheme(.light)
-            .safeAreaInset(edge: .top) {
-                // 8. 返回按钮 - 使用safeAreaInset确保在最上层
-                HStack {
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            presentationMode.wrappedValue.dismiss()
-                        }
-                    }) {
-                        Image(systemName: "arrow.left")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.black.opacity(0.8))
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    }
-                    .padding(.leading, 20)
-                    
-                    Spacer()
-                }
-                .padding(.top, 10)
-                .background(Color.clear)
-            }
             .onAppear {
                 // 启用系统级右滑返回手势 - 使用现代iOS方法
                 DispatchQueue.main.async {
@@ -118,6 +95,31 @@ struct LegLevelView: View {
             TopBlurView()
                 .allowsHitTesting(false) // 允许点击穿透
                 .zIndex(100) // 确保在所有内容之上
+            
+            // 8. 返回按钮 - 最外层确保在TopBlurView之上
+            VStack {
+                HStack {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                    }) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.black.opacity(0.8))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    }
+                    .padding(.leading, 20)
+                    .padding(.top, 60) // 确保在安全区域内
+                    
+                    Spacer()
+                }
+                Spacer()
+            }
+            .zIndex(300) // 最高层级，确保可见
         }
     }
 }
