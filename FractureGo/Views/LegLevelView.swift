@@ -74,8 +74,7 @@ struct LegLevelView: View {
             .ignoresSafeArea(.all) // 忽略所有安全区域
         }
         .navigationBarHidden(true)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .edgesIgnoringSafeArea(.all)
+        .ignoresSafeArea(.all)
         .background(Color(hex: "f5f5f0")) // 额外的背景保证
     }
 }

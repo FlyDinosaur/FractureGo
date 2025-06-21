@@ -26,7 +26,7 @@ struct MainView: View {
                         .frame(height: 160)
                         .ignoresSafeArea(edges: .top)
                     
-                    // 中间内容区域 - 减去顶部和底部导航栏的高度
+                    // 中间内容区域 - 灵活高度
                     NavigationView {
                         ZStack {
                             switch selectedTab {
@@ -46,8 +46,7 @@ struct MainView: View {
                         }
                         .navigationBarHidden(true)
                     }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: geometry.size.height - 160 - 80 - geometry.safeAreaInsets.bottom)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     
                     Spacer(minLength: 0)
                 }
@@ -159,19 +158,31 @@ struct CardListView: View {
         VStack(spacing: 20) {
             
             // 卡片1 - 手部训练
-            NavigationLink(destination: HandLevelView()) {
+            NavigationLink(destination: 
+                HandLevelView()
+                    .navigationBarHidden(true)
+                    .ignoresSafeArea(.all)
+            ) {
                 CardImageView(imageName: "卡片1", title: "手部训练")
             }
             .buttonStyle(PlainButtonStyle())
             
             // 卡片2 - 手臂训练
-            NavigationLink(destination: ArmLevelView()) {
+            NavigationLink(destination: 
+                ArmLevelView()
+                    .navigationBarHidden(true)
+                    .ignoresSafeArea(.all)
+            ) {
                 CardImageView(imageName: "卡片2", title: "手臂训练")
             }
             .buttonStyle(PlainButtonStyle())
             
             // 卡片3 - 腿部训练
-            NavigationLink(destination: LegLevelView()) {
+            NavigationLink(destination: 
+                LegLevelView()
+                    .navigationBarHidden(true)
+                    .ignoresSafeArea(.all)
+            ) {
                 CardImageView(imageName: "卡片3", title: "腿部训练")
             }
             .buttonStyle(PlainButtonStyle())

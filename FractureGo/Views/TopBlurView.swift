@@ -14,8 +14,10 @@ struct TopBlurView: View {
                 .fill(Color(hex: "9ecd57"))
                 .frame(height: 160)
                 .ignoresSafeArea(edges: .top)
+                .clipped()
             Spacer()
         }
+        .ignoresSafeArea(.all)
     }
 }
 
