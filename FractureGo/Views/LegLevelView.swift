@@ -15,64 +15,73 @@ struct LegLevelView: View {
     
     var body: some View {
         ZStack {
-            Color(hex: "f5f5f0")
-                .ignoresSafeArea(.all)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            Image("level_background")
-                .renderingMode(.original)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(
-                    minWidth: UIScreen.main.bounds.width * 1.5,
-                    minHeight: UIScreen.main.bounds.height * 1.5
-                )
-                .opacity(0.25)
-                .clipped()
-                .ignoresSafeArea(.all)
-            
-            GeometryReader { geometry in
+            NavigationView {
                 ZStack {
-                    LegCurvePath(color: legColor)
-                        .fill(legColor)
-                        .overlay(
-                            LegCurvePath(color: legColor)
-                                .stroke(legColor, lineWidth: 6)
-                        )
-                        .shadow(color: legColor.opacity(0.4), radius: 8, x: 0, y: 3)
+                    // 1. 米白色背景 - 确保完全覆盖整个屏幕
+                    Color(hex: "f5f5f0")
+                        .ignoresSafeArea(.all)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     
-                    LegLevelButtonsView(
-                        completedLevels: $completedLevels,
-                        geometry: geometry,
-                        color: legColor
-                    )
-                    
-                    LegGiftBoxView(
-                        position: getLegPathEndPosition(in: geometry),
-                        color: legColor
-                    )
-                }
-            }
-            
-            VStack {
-                Spacer()
-                HStack {
-                    Image("mascot")
+                    // 2. level_background图片 - 延伸填充整个屏幕
+                    Image("level_background")
+                        .renderingMode(.original)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 280, height: 280)
-                        .padding(.leading, 10)
-                        .padding(.bottom, 20)
-                    Spacer()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(
+                            minWidth: UIScreen.main.bounds.width * 1.5,
+                            minHeight: UIScreen.main.bounds.height * 1.5
+                        )
+                        .opacity(0.25)
+                        .clipped()
+                        .ignoresSafeArea(.all)
+                    
+                    GeometryReader { geometry in
+                        ZStack {
+                            // 3. S形曲线路径 - 填充闭合部分 + 描边
+                            LegCurvePath(color: legColor)
+                                .fill(legColor)
+                                .overlay(
+                                    LegCurvePath(color: legColor)
+                                        .stroke(legColor, lineWidth: 6)
+                                )
+                                .shadow(color: legColor.opacity(0.4), radius: 8, x: 0, y: 3)
+                            
+                            // 4. 关卡按钮（第1关在底部，重新排序）
+                            LegLevelButtonsView(
+                                completedLevels: $completedLevels,
+                                geometry: geometry,
+                                color: legColor
+                            )
+                            
+                            // 5. 礼品盒 - 位于第8关左下方
+                            LegGiftBoxView(
+                                position: getLegPathEndPosition(in: geometry),
+                                color: legColor
+                            )
+                        }
+                    }
+                    
+                    // 6. 吉祥物 - 严格保证在左下角
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Image("mascot")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 280, height: 280)
+                                .padding(.leading, 10)
+                                .padding(.bottom, 20)
+                            Spacer()
+                        }
+                    }
                 }
             }
-            
-            TopBlurView()
-                .frame(height: 160)
-                .ignoresSafeArea(edges: .top)
-                .allowsHitTesting(false)
-            
-            VStack {
+            .navigationBarHidden(true)
+            .navigationViewStyle(StackNavigationViewStyle())
+            .statusBarHidden(false)
+            .preferredColorScheme(.light)
+            .safeAreaInset(edge: .top) {
+                // 8. 返回按钮 - 使用safeAreaInset确保在最上层
                 HStack {
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.3)) {
@@ -88,27 +97,28 @@ struct LegLevelView: View {
                             .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
                     }
                     .padding(.leading, 20)
-                    .padding(.top, 60)
                     
                     Spacer()
                 }
-                Spacer()
+                .padding(.top, 10)
+                .background(Color.clear)
             }
-            .zIndex(1000)
-        }
-        .navigationBarHidden(true)
-        .statusBarHidden(false)
-        .preferredColorScheme(.light)
-        .gesture(
-            DragGesture()
-                .onEnded { value in
-                    if value.startLocation.x < 20 && value.translation.width > 100 {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            presentationMode.wrappedValue.dismiss()
-                        }
+            .onAppear {
+                // 启用系统级右滑返回手势 - 使用现代iOS方法
+                DispatchQueue.main.async {
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let window = windowScene.windows.first,
+                       let navigationController = window.rootViewController as? UINavigationController {
+                        navigationController.interactivePopGestureRecognizer?.isEnabled = true
                     }
                 }
-        )
+            }
+            
+            // 7. TopBlurView - 顶部遮挡 - 最外层确保显示
+            TopBlurView()
+                .allowsHitTesting(false) // 允许点击穿透
+                .zIndex(100) // 确保在所有内容之上
+        }
     }
 }
 
