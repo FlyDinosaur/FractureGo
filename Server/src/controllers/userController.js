@@ -95,6 +95,11 @@ class UserController {
                 (?, 'leg', 1, 1)
             `, [userId, userId, userId]);
 
+            // 初始化签到统计
+            await db.query(`
+                INSERT INTO user_sign_stats (user_id) VALUES (?)
+            `, [userId]);
+
             // 生成JWT Token
             const token = jwt.sign(
                 { userId, phoneNumber, userType },
@@ -280,7 +285,7 @@ class UserController {
             const [user] = await db.query(`
                 SELECT 
                     id, phone_number, nickname, user_type, birth_date,
-                    is_wechat_user, wechat_nickname, wechat_avatar_url,
+                    avatar_data, is_wechat_user, wechat_nickname, wechat_avatar_url,
                     created_at, last_login_at
                 FROM users 
                 WHERE id = ? AND status = "active"
@@ -320,11 +325,39 @@ class UserController {
             }
 
             const userId = req.user.id;
-            const { nickname, birthDate } = req.body;
+            const { nickname, birthDate, avatarData } = req.body;
+
+            // 构建更新SQL
+            let updateFields = [];
+            let updateValues = [];
+
+            if (nickname !== undefined) {
+                updateFields.push('nickname = ?');
+                updateValues.push(nickname);
+            }
+
+            if (birthDate !== undefined) {
+                updateFields.push('birth_date = ?');
+                updateValues.push(birthDate);
+            }
+
+            if (avatarData !== undefined) {
+                updateFields.push('avatar_data = ?');
+                updateValues.push(avatarData);
+            }
+
+            if (updateFields.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: '没有提供要更新的字段'
+                });
+            }
+
+            updateValues.push(userId);
 
             await db.query(
-                'UPDATE users SET nickname = ?, birth_date = ? WHERE id = ?',
-                [nickname, birthDate, userId]
+                `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
+                updateValues
             );
 
             res.json({
@@ -334,6 +367,55 @@ class UserController {
 
         } catch (error) {
             console.error('更新用户信息错误:', error);
+            res.status(500).json({
+                success: false,
+                message: '服务器内部错误'
+            });
+        }
+    }
+
+    // 更新用户头像
+    async updateAvatar(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: '输入验证失败',
+                    errors: errors.array()
+                });
+            }
+
+            const userId = req.user.id;
+            const { avatarData } = req.body;
+
+            if (!avatarData) {
+                return res.status(400).json({
+                    success: false,
+                    message: '头像数据不能为空'
+                });
+            }
+
+            // 验证base64数据格式
+            if (!avatarData.startsWith('data:image/')) {
+                return res.status(400).json({
+                    success: false,
+                    message: '头像数据格式不正确'
+                });
+            }
+
+            await db.query(
+                'UPDATE users SET avatar_data = ? WHERE id = ?',
+                [avatarData, userId]
+            );
+
+            res.json({
+                success: true,
+                message: '头像更新成功'
+            });
+
+        } catch (error) {
+            console.error('更新头像错误:', error);
             res.status(500).json({
                 success: false,
                 message: '服务器内部错误'

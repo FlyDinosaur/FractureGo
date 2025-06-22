@@ -13,6 +13,7 @@ async function createTables() {
                 nickname VARCHAR(100) NOT NULL,
                 user_type ENUM('patient', 'doctor', 'therapist') NOT NULL,
                 birth_date DATE,
+                avatar_data LONGTEXT COMMENT '用户头像Base64数据',
                 is_wechat_user BOOLEAN DEFAULT FALSE,
                 wechat_open_id VARCHAR(100),
                 wechat_union_id VARCHAR(100),
@@ -99,6 +100,41 @@ async function createTables() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
+        // 创建签到表
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS user_sign_ins (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                sign_date DATE NOT NULL,
+                sign_time TIME NOT NULL,
+                sign_type ENUM('normal', 'gift', 'target') DEFAULT 'normal' COMMENT '签到类型：普通、礼盒、目标',
+                reward_points INT DEFAULT 0 COMMENT '获得积分',
+                continuous_days INT DEFAULT 1 COMMENT '连续签到天数',
+                note TEXT COMMENT '签到备注',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_user_date (user_id, sign_date),
+                INDEX idx_user_sign_date (user_id, sign_date),
+                INDEX idx_sign_date (sign_date)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        // 创建签到统计表
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS user_sign_stats (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                total_sign_days INT DEFAULT 0 COMMENT '总签到天数',
+                current_continuous_days INT DEFAULT 0 COMMENT '当前连续签到天数',
+                max_continuous_days INT DEFAULT 0 COMMENT '最大连续签到天数',
+                total_reward_points INT DEFAULT 0 COMMENT '总获得积分',
+                last_sign_date DATE NULL COMMENT '最后签到日期',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_user (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
         // 插入默认API密钥
         const defaultApiKey = process.env.API_KEY || 'fracturego_default_api_key_2024';
         await db.query(`
@@ -107,7 +143,7 @@ async function createTables() {
         `, [
             'Default Client Key',
             defaultApiKey,
-            JSON.stringify(['user:read', 'user:write', 'training:read', 'training:write']),
+            JSON.stringify(['user:read', 'user:write', 'training:read', 'training:write', 'signin:read', 'signin:write']),
             true
         ]);
 
