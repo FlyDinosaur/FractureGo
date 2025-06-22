@@ -132,7 +132,7 @@ class SignInDataManager: ObservableObject {
     
     private func handleNetworkError(_ error: NetworkError) -> String {
         switch error {
-        case .noConnection:
+        case .      noConnection:
             return "网络连接失败，请检查网络设置"
         case .requestFailed(let message):
             return message
@@ -253,6 +253,7 @@ struct CalendarSignInCardView: View {
                 )
             }
             .padding(.horizontal, 18) // 整体左右留白
+            .padding(.top, 30) // 增大与顶部遮盖的间距
             
             // 错误信息显示
             if let errorMessage = errorMessage {
@@ -317,7 +318,7 @@ struct CalendarCardComponent: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 10)
-            .padding(.bottom, 8)
+            .padding(.bottom, 24) // 年月与日历之间添加24pt间距
             
             // 日历头
             HStack(spacing: 0) {
@@ -352,7 +353,7 @@ struct CalendarCardComponent: View {
                 }
             }
             .padding(.horizontal, 8)
-            .padding(.bottom, 8)
+            .padding(.bottom, 24) // 日历与卡片下缘添加24pt间距
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 0)
