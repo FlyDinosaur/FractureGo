@@ -5,6 +5,7 @@ const router = express.Router();
 // 导入控制器
 const userController = require('../controllers/userController');
 const trainingController = require('../controllers/trainingController');
+const signInController = require('../controllers/signInController');
 
 // 导入中间件
 const { authenticateApiKey, authenticateToken, requirePermission } = require('../middleware/auth');
@@ -49,7 +50,18 @@ const userValidation = {
         body('birthDate')
             .optional()
             .isISO8601()
-            .withMessage('请输入有效的出生日期')
+            .withMessage('请输入有效的出生日期'),
+        body('avatarData')
+            .optional()
+            .isString()
+            .withMessage('头像数据格式不正确')
+    ],
+    updateAvatar: [
+        body('avatarData')
+            .notEmpty()
+            .withMessage('头像数据不能为空')
+            .isString()
+            .withMessage('头像数据必须为字符串')
     ],
     changePassword: [
         body('oldPassword')
@@ -83,6 +95,27 @@ const trainingValidation = {
         body('level')
             .isInt({ min: 1, max: 100 })
             .withMessage('关卡必须为1-100之间的整数')
+    ]
+};
+
+const signInValidation = {
+    signIn: [
+        body('signType')
+            .optional()
+            .isIn(['normal', 'gift', 'target'])
+            .withMessage('签到类型无效'),
+        body('note')
+            .optional()
+            .isLength({ max: 200 })
+            .withMessage('备注长度不能超过200字符')
+    ],
+    getSignInData: [
+        query('year')
+            .isInt({ min: 2020, max: 2030 })
+            .withMessage('年份必须为2020-2030之间的整数'),
+        query('month')
+            .isInt({ min: 1, max: 12 })
+            .withMessage('月份必须为1-12之间的整数')
     ]
 };
 
@@ -193,6 +226,14 @@ router.put('/api/v1/user/change-password',
     userController.changePassword
 );
 
+// 更新用户头像
+router.put('/api/v1/user/avatar',
+    authenticateToken,
+    requirePermission('user:write'),
+    userValidation.updateAvatar,
+    userController.updateAvatar
+);
+
 // ==================== 训练相关路由 ====================
 
 // 获取用户训练进度
@@ -241,6 +282,38 @@ router.get('/api/v1/training/leaderboard',
     requirePermission('training:read'),
     trainingQueryValidation.getLeaderboard,
     trainingController.getLeaderboard
+);
+
+// ==================== 签到相关路由 ====================
+
+// 用户签到
+router.post('/api/v1/signin',
+    authenticateToken,
+    requirePermission('signin:write'),
+    signInValidation.signIn,
+    signInController.signIn
+);
+
+// 获取签到数据
+router.get('/api/v1/signin/data',
+    authenticateToken,
+    requirePermission('signin:read'),
+    signInValidation.getSignInData,
+    signInController.getSignInData
+);
+
+// 获取签到统计
+router.get('/api/v1/signin/stats',
+    authenticateToken,
+    requirePermission('signin:read'),
+    signInController.getSignInStats
+);
+
+// 检查今日签到状态
+router.get('/api/v1/signin/today',
+    authenticateToken,
+    requirePermission('signin:read'),
+    signInController.checkTodaySignIn
 );
 
 // ==================== 错误处理 ====================
