@@ -185,44 +185,44 @@ struct CardListView: View {
                         // 顶部间距，确保内容居中
                         Spacer()
                             .frame(height: max(20, (geometry.size.height - 500) / 2))
-                        
-                        // 卡片1 - 手部训练
-                        Button(action: {
-                            showHandLevel = true
-                        }) {
-                            CardImageView(imageName: "卡片1", title: "手部训练")
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .fullScreenCover(isPresented: $showHandLevel) {
-                            HandLevelView()
-                        }
-                        
-                        // 卡片2 - 手臂训练
-                        Button(action: {
-                            showArmLevel = true
-                        }) {
-                            CardImageView(imageName: "卡片2", title: "手臂训练")
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .fullScreenCover(isPresented: $showArmLevel) {
-                            ArmLevelView()
-                        }
-                        
-                        // 卡片3 - 腿部训练
-                        Button(action: {
-                            showLegLevel = true
-                        }) {
-                            CardImageView(imageName: "卡片3", title: "腿部训练")
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .fullScreenCover(isPresented: $showLegLevel) {
-                            LegLevelView()
-                        }
-                        
+            
+            // 卡片1 - 手部训练
+            Button(action: {
+                showHandLevel = true
+            }) {
+                CardImageView(imageName: "卡片1", title: "手部训练")
+            }
+            .buttonStyle(PlainButtonStyle())
+            .fullScreenCover(isPresented: $showHandLevel) {
+                HandLevelView()
+            }
+            
+            // 卡片2 - 手臂训练
+            Button(action: {
+                showArmLevel = true
+            }) {
+                CardImageView(imageName: "卡片2", title: "手臂训练")
+            }
+            .buttonStyle(PlainButtonStyle())
+            .fullScreenCover(isPresented: $showArmLevel) {
+                ArmLevelView()
+            }
+            
+            // 卡片3 - 腿部训练
+            Button(action: {
+                showLegLevel = true
+            }) {
+                CardImageView(imageName: "卡片3", title: "腿部训练")
+            }
+            .buttonStyle(PlainButtonStyle())
+            .fullScreenCover(isPresented: $showLegLevel) {
+                LegLevelView()
+            }
+            
                         // 底部间距，确保内容居中
-                        Spacer()
+            Spacer()
                             .frame(height: max(20, (geometry.size.height - 500) / 2))
-                    }
+        }
                     .padding(.horizontal, 24) // 增加左右边距
                     .frame(minHeight: geometry.size.height) // 确保ScrollView内容至少有屏幕高度
                 }
