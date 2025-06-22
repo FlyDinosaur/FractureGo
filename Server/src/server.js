@@ -56,6 +56,10 @@ class FractureGoServer {
             limit: process.env.UPLOAD_MAX_SIZE || '10mb'
         }));
 
+        // 图片优化中间件
+        const { imageOptimization } = require('./middleware/imageOptimization');
+        this.app.use('/uploads', imageOptimization);
+        
         // 静态文件服务（如果需要）
         const uploadPath = process.env.UPLOAD_PATH || 'uploads';
         this.app.use('/uploads', express.static(path.join(__dirname, '..', uploadPath)));

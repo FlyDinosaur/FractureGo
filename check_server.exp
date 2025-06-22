@@ -1,0 +1,49 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+spawn ssh root@117.72.161.6
+
+expect {
+    "password:" {
+        send "WYX11037414qq\r"
+    }
+    "Are you sure you want to continue connecting" {
+        send "yes\r"
+        expect "password:"
+        send "WYX11037414qq\r"
+    }
+}
+
+expect "# "
+send "echo '=== 检查现有FractureGo-Server项目 ==='\r"
+send "ls -la FractureGo-Server/\r"
+send "ls -la FractureGo-Server/src/\r"
+
+expect "# "
+send "echo '=== 检查数据库配置 ==='\r"
+send "find FractureGo-Server -name '*.js' -exec grep -l 'mysql\\|database' {} \\;\r"
+
+expect "# "
+send "echo '=== 查看配置文件 ==='\r"
+send "cat FractureGo-Server/src/config/database.js\r"
+
+expect "# "
+send "echo '=== 查看package.json ==='\r"
+send "cat FractureGo-Server/package.json\r"
+
+expect "# "
+send "echo '=== 测试不同数据库密码 ==='\r"
+send "mysql -u root -p -e 'SHOW DATABASES;' 2>&1 | head -5\r"
+expect "password:"
+send "WYX11037414qq\r"
+
+expect "# "
+send "mysql -u root -e 'SHOW DATABASES;' 2>&1 | head -5\r"
+
+expect "# "
+send "echo '=== 检查当前MySQL服务状态 ==='\r"
+send "systemctl status mysql 2>&1 | head -10\r"
+
+expect "# "
+send "exit\r"
+expect eof 

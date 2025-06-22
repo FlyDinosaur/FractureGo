@@ -1,0 +1,22 @@
+#!/usr/bin/expect -f
+
+set timeout 20
+spawn ssh root@117.72.161.6
+
+expect {
+    "password:" {
+        send "WYX11037414qq\r"
+    }
+    "Are you sure you want to continue connecting" {
+        send "yes\r"
+        expect "password:"
+        send "WYX11037414qq\r"
+    }
+}
+
+expect "# "
+send "echo 'SSH连接成功'\r"
+send "pwd\r"
+send "ls -la\r"
+
+interact 

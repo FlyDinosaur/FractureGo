@@ -43,8 +43,8 @@ class DatabaseConfig: ObservableObject {
         self.apiKey = Bundle.main.object(forInfoDictionaryKey: "API_KEY") as? String ?? "ak_aa0151d02fa4ff2ff657409a1908e0a4"
         #endif
         
-        self.timeout = 30.0
-        self.maxRetries = 3
+        self.timeout = 60.0  // 增加到60秒
+        self.maxRetries = 5  // 增加重试次数到5次
         
         // 安全配置
         self.allowedHosts = [
@@ -151,8 +151,14 @@ class DatabaseConfig: ObservableObject {
             
             // 处理网络错误
             if let error = error {
+                print("🔄 网络请求失败，第\(retryCount + 1)次尝试: \(error.localizedDescription)")
+                
                 if retryCount < self.maxRetries {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + Double(retryCount + 1)) {
+                    // 指数退避重试策略：2^retryCount 秒，最大不超过30秒
+                    let delay = min(pow(2.0, Double(retryCount)), 30.0)
+                    print("⏱️ 将在\(delay)秒后重试...")
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                         self.executeRequestWithRetry(
                             request: request,
                             responseType: responseType,
@@ -163,6 +169,7 @@ class DatabaseConfig: ObservableObject {
                     return
                 }
                 
+                print("❌ 所有重试都失败，放弃请求")
                 completion(.failure(.requestFailed(error.localizedDescription)))
                 return
             }
