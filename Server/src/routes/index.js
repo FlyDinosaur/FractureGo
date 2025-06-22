@@ -5,10 +5,12 @@ const router = express.Router();
 // 导入控制器
 const userController = require('../controllers/userController');
 const trainingController = require('../controllers/trainingController');
+const postController = require('../controllers/postController');
 
 // 导入中间件
 const { authenticateApiKey, authenticateToken, requirePermission } = require('../middleware/auth');
 const { loginRateLimit, registerRateLimit } = require('../middleware/security');
+const { uploadSingle } = require('../middleware/upload');
 
 // 输入验证规则
 const userValidation = {
@@ -132,6 +134,64 @@ const trainingQueryValidation = {
     ]
 };
 
+// 帖子验证规则
+const postValidation = {
+    createPost: [
+        body('title')
+            .isLength({ min: 1, max: 255 })
+            .withMessage('标题长度应为1-255位')
+            .trim(),
+        body('content')
+            .isLength({ min: 1 })
+            .withMessage('内容不能为空'),
+        body('summary')
+            .optional()
+            .isLength({ max: 500 })
+            .withMessage('摘要长度不能超过500字符'),
+        body('postType')
+            .optional()
+            .isIn(['text', 'video'])
+            .withMessage('帖子类型无效'),
+        body('categoryId')
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage('分类ID无效'),
+        body('tags')
+            .optional()
+            .isArray()
+            .withMessage('标签必须为数组')
+    ]
+};
+
+const postQueryValidation = {
+    getPosts: [
+        query('page')
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage('页码必须为正整数'),
+        query('limit')
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage('每页数量必须为1-50之间的整数'),
+        query('category_id')
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage('分类ID无效'),
+        query('post_type')
+            .optional()
+            .isIn(['text', 'video'])
+            .withMessage('帖子类型无效'),
+        query('sort')
+            .optional()
+            .isIn(['created_at', 'like_count', 'view_count', 'comment_count'])
+            .withMessage('排序字段无效'),
+        query('order')
+            .optional()
+            .isIn(['ASC', 'DESC'])
+            .withMessage('排序方向无效')
+    ]
+};
+
 // 健康检查端点（无需认证）
 router.get('/health', (req, res) => {
     res.json({
@@ -241,6 +301,50 @@ router.get('/api/v1/training/leaderboard',
     requirePermission('training:read'),
     trainingQueryValidation.getLeaderboard,
     trainingController.getLeaderboard
+);
+
+// ==================== 帖子相关路由 ====================
+
+// 获取分类列表（公开接口）- 必须在 :id 路由之前
+router.get('/api/v1/posts/categories',
+    requirePermission('post:read'),
+    postController.getCategories
+);
+
+// 上传媒体文件（需要登录）- 必须在 :id 路由之前
+router.post('/api/v1/posts/upload',
+    authenticateToken,
+    requirePermission('post:write'),
+    uploadSingle,
+    postController.uploadMedia
+);
+
+// 获取帖子列表（公开接口，支持未登录用户浏览）
+router.get('/api/v1/posts',
+    requirePermission('post:read'),
+    postQueryValidation.getPosts,
+    postController.getPosts
+);
+
+// 获取帖子详情（公开接口）
+router.get('/api/v1/posts/:id',
+    requirePermission('post:read'),
+    postController.getPostDetail
+);
+
+// 创建帖子（需要登录）
+router.post('/api/v1/posts',
+    authenticateToken,
+    requirePermission('post:write'),
+    postValidation.createPost,
+    postController.createPost
+);
+
+// 点赞/取消点赞帖子（需要登录）
+router.post('/api/v1/posts/:id/like',
+    authenticateToken,
+    requirePermission('post:write'),
+    postController.toggleLike
 );
 
 // ==================== 错误处理 ====================
