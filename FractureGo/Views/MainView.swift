@@ -19,16 +19,18 @@ struct MainView: View {
                 // 背景
                 Color(hex: "f5f5f0").ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // 顶部波浪遮挡
-                    WaveShape()
-                        .fill(Color(hex: "9ecd57"))
-                        .frame(height: 160)
-                        .ignoresSafeArea(edges: .top)
+                // 主内容区域 - 占据整个屏幕，居中显示
+                VStack {
+                    // 顶部间距，为波浪形状留空
+                    Spacer()
+                        .frame(height: 80) // 减少顶部间距，让内容更居中
                     
-                    // 中间内容区域 - 灵活高度
+                    // 主要内容区域
                     NavigationView {
                         ZStack {
+                            // 确保背景色一致
+                            Color(hex: "f5f5f0").ignoresSafeArea()
+                            
                             switch selectedTab {
                             case 0:
                                 HomeView()
@@ -46,7 +48,22 @@ struct MainView: View {
                         }
                         .navigationBarHidden(true)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .navigationViewStyle(StackNavigationViewStyle()) // 确保使用一致的导航样式
+                    .frame(maxWidth: .infinity)
+                    
+                    // 底部间距，为TabBar留空
+                    Spacer()
+                        .frame(height: 60 + geometry.safeAreaInsets.bottom)
+                }
+                
+                // 顶部波浪遮挡 - 作为覆盖层
+                VStack {
+                    WaveShape()
+                        .fill(Color(hex: "9ecd57"))
+                        .frame(height: 160)
+                        .ignoresSafeArea(edges: .top)
+                    
+                    Spacer()
                 }
                 
                 // 底部导航栏 - 完全贴合屏幕底部
@@ -157,46 +174,61 @@ struct CardListView: View {
     @State private var showLegLevel = false
     
     var body: some View {
-        VStack(spacing: 20) {
-            
-            // 卡片1 - 手部训练
-            Button(action: {
-                showHandLevel = true
-            }) {
-                CardImageView(imageName: "卡片1", title: "手部训练")
+        GeometryReader { geometry in
+            ZStack {
+                // 明确设置背景色
+                Color(hex: "f5f5f0")
+                    .ignoresSafeArea()
+                
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 35) {
+                        // 顶部间距，确保内容居中
+                        Spacer()
+                            .frame(height: max(20, (geometry.size.height - 500) / 2))
+                        
+                        // 卡片1 - 手部训练
+                        Button(action: {
+                            showHandLevel = true
+                        }) {
+                            CardImageView(imageName: "卡片1", title: "手部训练")
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .fullScreenCover(isPresented: $showHandLevel) {
+                            HandLevelView()
+                        }
+                        
+                        // 卡片2 - 手臂训练
+                        Button(action: {
+                            showArmLevel = true
+                        }) {
+                            CardImageView(imageName: "卡片2", title: "手臂训练")
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .fullScreenCover(isPresented: $showArmLevel) {
+                            ArmLevelView()
+                        }
+                        
+                        // 卡片3 - 腿部训练
+                        Button(action: {
+                            showLegLevel = true
+                        }) {
+                            CardImageView(imageName: "卡片3", title: "腿部训练")
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .fullScreenCover(isPresented: $showLegLevel) {
+                            LegLevelView()
+                        }
+                        
+                        // 底部间距，确保内容居中
+                        Spacer()
+                            .frame(height: max(20, (geometry.size.height - 500) / 2))
+                    }
+                    .padding(.horizontal, 24) // 增加左右边距
+                    .frame(minHeight: geometry.size.height) // 确保ScrollView内容至少有屏幕高度
+                }
             }
-            .buttonStyle(PlainButtonStyle())
-            .fullScreenCover(isPresented: $showHandLevel) {
-                HandLevelView()
-            }
-            
-            // 卡片2 - 手臂训练
-            Button(action: {
-                showArmLevel = true
-            }) {
-                CardImageView(imageName: "卡片2", title: "手臂训练")
-            }
-            .buttonStyle(PlainButtonStyle())
-            .fullScreenCover(isPresented: $showArmLevel) {
-                ArmLevelView()
-            }
-            
-            // 卡片3 - 腿部训练
-            Button(action: {
-                showLegLevel = true
-            }) {
-                CardImageView(imageName: "卡片3", title: "腿部训练")
-            }
-            .buttonStyle(PlainButtonStyle())
-            .fullScreenCover(isPresented: $showLegLevel) {
-                LegLevelView()
-            }
-            
-            Spacer()
         }
-        .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(hex: "f5f5f0"))
     }
 }
 
@@ -206,17 +238,17 @@ struct CardImageView: View {
     let title: String
     
     var body: some View {
-        HStack {
+        VStack(spacing: 0) {
             Image(imageName)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: 300, height: 140)
+                .frame(maxWidth: .infinity, maxHeight: 140)
                 .clipped()
                 .cornerRadius(16)
-            
-            Spacer(minLength: 0)
+                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         }
-        .frame(width: 300, height: 140)
+        .frame(maxWidth: .infinity, maxHeight: 140)
+        .padding(.horizontal, 8) // 给卡片增加一点内边距，让阴影不被裁切
     }
 }
 
