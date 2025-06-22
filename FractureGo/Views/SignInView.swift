@@ -6,34 +6,178 @@
 //
 
 import SwiftUI
+import Combine
 
 // MARK: - 签到数据模型
 struct SignInData {
     let year: Int
     let month: Int
     let signedDays: Set<Int>        // 已打卡日期
-    let unsignedDays: Set<Int>      // 未打卡日期
+    let unsignedDays: Set<Int>      // 未打卡日期 (暂时不使用，保持接口兼容性)
     let giftDays: Set<Int>          // 礼盒日期
     let targetDays: Set<Int>        // 目标日期
     let continuousDays: Int         // 连续打卡天数
 }
 
+// MARK: - 签到数据管理器
+class SignInDataManager: ObservableObject {
+    @Published var signInData: SignInData
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    
+    private let networkService = NetworkService.shared
+    private var cancellables = Set<AnyCancellable>()
+    
+    init() {
+        let currentDate = Date()
+        let year = Calendar.current.component(.year, from: currentDate)
+        let month = Calendar.current.component(.month, from: currentDate)
+        
+        // 初始化为空数据
+        self.signInData = SignInData(
+            year: year,
+            month: month,
+            signedDays: [],
+            unsignedDays: [],
+            giftDays: [],
+            targetDays: [],
+            continuousDays: 0
+        )
+        
+        // 加载当前月份数据
+        loadSignInData(for: year, month: month)
+    }
+    
+    func loadSignInData(for year: Int, month: Int) {
+        isLoading = true
+        errorMessage = nil
+        
+        // 同时获取月度数据和统计数据
+        let group = DispatchGroup()
+        var monthlyData: SignInDataResponse?
+        var statsData: SignInStatsResponse?
+        var loadError: NetworkError?
+        
+        // 获取月度签到数据
+        group.enter()
+        networkService.getSignInData(year: year, month: month) { result in
+            defer { group.leave() }
+            switch result {
+            case .success(let data):
+                monthlyData = data
+            case .failure(let error):
+                loadError = error
+            }
+        }
+        
+        // 获取签到统计数据
+        group.enter()
+        networkService.getSignInStats { result in
+            defer { group.leave() }
+            switch result {
+            case .success(let data):
+                statsData = data
+            case .failure(let error):
+                if loadError == nil {
+                    loadError = error
+                }
+            }
+        }
+        
+        group.notify(queue: .main) {
+            self.isLoading = false
+            
+            if let error = loadError {
+                self.errorMessage = self.handleNetworkError(error)
+                return
+            }
+            
+            guard let monthly = monthlyData, let stats = statsData else {
+                self.errorMessage = "数据加载失败"
+                return
+            }
+            
+            self.processSignInData(monthly: monthly, stats: stats)
+        }
+    }
+    
+    private func processSignInData(monthly: SignInDataResponse, stats: SignInStatsResponse) {
+        var signedDays = Set<Int>()
+        var giftDays = Set<Int>()
+        var targetDays = Set<Int>()
+        
+        for record in monthly.signIns {
+            signedDays.insert(record.day)
+            
+            switch record.signInType {
+            case "gift":
+                giftDays.insert(record.day)
+            case "target":
+                targetDays.insert(record.day)
+            default:
+                break // "normal" 类型不需要特殊处理
+            }
+        }
+        
+        signInData = SignInData(
+            year: monthly.year,
+            month: monthly.month,
+            signedDays: signedDays,
+            unsignedDays: [], // 不再使用
+            giftDays: giftDays,
+            targetDays: targetDays,
+            continuousDays: stats.currentStreak
+        )
+    }
+    
+    private func handleNetworkError(_ error: NetworkError) -> String {
+        switch error {
+        case .noConnection:
+            return "网络连接失败，请检查网络设置"
+        case .requestFailed(let message):
+            return message
+        case .decodingError(let message):
+            return "数据解析失败: \(message)"
+        case .invalidResponse:
+            return "服务器响应异常"
+        case .invalidData:
+            return "数据格式错误"
+        case .unauthorized:
+            return "未授权访问，请重新登录"
+        case .forbidden:
+            return "访问被禁止"
+        case .rateLimited:
+            return "请求过于频繁，请稍后再试"
+        case .serverError:
+            return "服务器内部错误"
+        }
+    }
+    
+    func performSignIn(completion: @escaping (Bool, String) -> Void) {
+        networkService.signIn { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    // 签到成功，刷新当前月份数据
+                    let currentDate = Date()
+                    let year = Calendar.current.component(.year, from: currentDate)
+                    let month = Calendar.current.component(.month, from: currentDate)
+                    self.loadSignInData(for: year, month: month)
+                    completion(true, response.message)
+                case .failure(let error):
+                    completion(false, self.handleNetworkError(error))
+                }
+            }
+        }
+    }
+}
+
 // MARK: - 主视图
 struct SignInView: View {
+    @StateObject private var dataManager = SignInDataManager()
     @State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
     @State private var selectedMonth: Int = Calendar.current.component(.month, from: Date())
     @State private var showPicker = false
-    
-    // 示例数据 - 将来可从服务器获取
-    @State private var signInData: SignInData = SignInData(
-        year: Calendar.current.component(.year, from: Date()),
-        month: Calendar.current.component(.month, from: Date()),
-        signedDays: [6, 8, 9, 10, 11],
-        unsignedDays: [7],
-        giftDays: [13],
-        targetDays: [24],
-        continuousDays: 4
-    )
     
     let greenColor = Color(red: 158/255, green: 205/255, blue: 87/255)
     let grayColor = Color(red: 0.8, green: 0.8, blue: 0.8)
@@ -43,31 +187,20 @@ struct SignInView: View {
             selectedYear: $selectedYear,
             selectedMonth: $selectedMonth,
             showPicker: $showPicker,
-            signInData: signInData,
+            signInData: dataManager.signInData,
+            isLoading: dataManager.isLoading,
+            errorMessage: dataManager.errorMessage,
             greenColor: greenColor,
             grayColor: grayColor,
             onDateChanged: { year, month in
-                // 这里将来可以调用API获取指定年月的数据
-                loadSignInData(for: year, month: month)
+                dataManager.loadSignInData(for: year, month: month)
+            },
+            onSignIn: {
+                dataManager.performSignIn { success, message in
+                    // 可以在这里显示签到结果
+                    print("签到结果: \(success ? "成功" : "失败") - \(message)")
+                }
             }
-        )
-    }
-    
-    // MARK: - 数据加载方法
-    private func loadSignInData(for year: Int, month: Int) {
-        // TODO: 从服务器获取指定年月的签到数据
-        // 示例：NetworkService.shared.getSignInData(year: year, month: month) { result in ... }
-        print("加载 \(year)年\(month)月 的签到数据")
-        
-        // 暂时使用示例数据
-        signInData = SignInData(
-            year: year,
-            month: month,
-            signedDays: [6, 8, 9, 10, 11],
-            unsignedDays: [7],
-            giftDays: [13],
-            targetDays: [24],
-            continuousDays: 4
         )
     }
 }
@@ -79,9 +212,12 @@ struct CalendarSignInCardView: View {
     @Binding var showPicker: Bool
     
     let signInData: SignInData
+    let isLoading: Bool
+    let errorMessage: String?
     let greenColor: Color
     let grayColor: Color
     let onDateChanged: (Int, Int) -> Void
+    let onSignIn: () -> Void
     
     // 英文年月格式
     var monthYearString: String {
@@ -104,6 +240,7 @@ struct CalendarSignInCardView: View {
                     selectedYear: selectedYear,
                     selectedMonth: selectedMonth,
                     signInData: signInData,
+                    isLoading: isLoading,
                     greenColor: greenColor,
                     grayColor: grayColor,
                     showPicker: $showPicker
@@ -116,6 +253,18 @@ struct CalendarSignInCardView: View {
                 )
             }
             .padding(.horizontal, 18) // 整体左右留白
+            
+            // 错误信息显示
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding()
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(8)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+            }
+            
             Spacer()
         }
         .edgesIgnoringSafeArea(.top) // 让内容扩展到顶部
@@ -138,6 +287,7 @@ struct CalendarCardComponent: View {
     let selectedYear: Int
     let selectedMonth: Int
     let signInData: SignInData
+    let isLoading: Bool
     let greenColor: Color
     let grayColor: Color
     @Binding var showPicker: Bool
@@ -182,16 +332,25 @@ struct CalendarCardComponent: View {
             .padding(.horizontal, 8)
             
             // 日历主体
-            CalendarGridView(
-                year: selectedYear,
-                month: selectedMonth,
-                signedDays: signInData.signedDays,
-                unsignedDays: signInData.unsignedDays,
-                giftDays: signInData.giftDays,
-                targetDays: signInData.targetDays,
-                greenColor: greenColor,
-                grayColor: grayColor
-            )
+            ZStack {
+                CalendarGridView(
+                    year: selectedYear,
+                    month: selectedMonth,
+                    signedDays: signInData.signedDays,
+                    unsignedDays: signInData.unsignedDays,
+                    giftDays: signInData.giftDays,
+                    targetDays: signInData.targetDays,
+                    greenColor: greenColor,
+                    grayColor: grayColor
+                )
+                .opacity(isLoading ? 0.3 : 1.0)
+                
+                if isLoading {
+                    ProgressView()
+                        .scaleEffect(1.2)
+                        .foregroundColor(greenColor)
+                }
+            }
             .padding(.horizontal, 8)
             .padding(.bottom, 8)
         }

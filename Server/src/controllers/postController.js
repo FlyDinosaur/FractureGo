@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator');
 const db = require('../config/database');
-const { uploadSingle } = require('../middleware/upload');
+// const { uploadSingle } = require('../middleware/upload'); // 临时注释掉
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -392,23 +392,104 @@ class PostController {
 
             const { file } = req;
             const fileUrl = `/uploads/posts/${file.filename}`;
+            
+            // 检查文件类型并提供优化建议
+            const isImage = file.mimetype.startsWith('image/');
+            const isVideo = file.mimetype.startsWith('video/');
+            
+            let optimizationTips = {};
+            
+            if (isImage) {
+                const fileSizeKB = file.size / 1024;
+                
+                // 为大图片提供压缩建议
+                if (fileSizeKB > 500) {
+                    optimizationTips = {
+                        recommended: true,
+                        suggestions: [
+                            '建议使用压缩参数：?quality=75&format=webp',
+                            '移动端建议：?width=800&quality=70',
+                            '缩略图建议：?width=300&height=200&quality=60'
+                        ],
+                        optimizedUrls: {
+                            mobile: `${fileUrl}?width=800&quality=70&format=webp`,
+                            thumbnail: `${fileUrl}?width=300&height=200&quality=60&format=webp`,
+                            compressed: `${fileUrl}?quality=75&format=webp`
+                        }
+                    };
+                }
+            }
+
+            // 准备响应数据
+            const responseData = {
+                url: fileUrl,
+                filename: file.filename,
+                originalName: file.originalname,
+                size: file.size,
+                mimeType: file.mimetype,
+                type: isImage ? 'image' : isVideo ? 'video' : 'other',
+                uploadedAt: new Date().toISOString()
+            };
+            
+            // 如果有优化建议，添加到响应中
+            if (optimizationTips.recommended) {
+                responseData.optimization = optimizationTips;
+            }
+
+            console.log(`文件上传成功: ${file.originalname} (${(file.size/1024).toFixed(1)}KB) -> ${fileUrl}`);
 
             res.json({
                 success: true,
-                data: {
-                    url: fileUrl,
-                    filename: file.filename,
-                    originalName: file.originalname,
-                    size: file.size,
-                    mimeType: file.mimetype
-                }
+                message: '文件上传成功',
+                data: responseData
             });
 
         } catch (error) {
             console.error('上传媒体文件错误:', error);
             res.status(500).json({
                 success: false,
-                message: '上传失败'
+                message: '上传失败',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
+
+    // 获取文件信息（用于检查文件状态）
+    async getMediaInfo(req, res) {
+        try {
+            const { filename } = req.params;
+            const filePath = path.join(__dirname, '..', '..', 'uploads', 'posts', filename);
+            
+            // 检查文件是否存在
+            try {
+                await fs.access(filePath);
+            } catch (error) {
+                return res.status(404).json({
+                    success: false,
+                    message: '文件不存在'
+                });
+            }
+            
+            const stats = await fs.stat(filePath);
+            const isImage = filename.match(/\.(jpg|jpeg|png|webp|gif)$/i);
+            
+            res.json({
+                success: true,
+                data: {
+                    filename,
+                    size: stats.size,
+                    type: isImage ? 'image' : 'other',
+                    createdAt: stats.birthtime,
+                    modifiedAt: stats.mtime,
+                    optimizationAvailable: isImage
+                }
+            });
+            
+        } catch (error) {
+            console.error('获取文件信息错误:', error);
+            res.status(500).json({
+                success: false,
+                message: '获取文件信息失败'
             });
         }
     }

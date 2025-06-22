@@ -6,6 +6,7 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const trainingController = require('../controllers/trainingController');
 const postController = require('../controllers/postController');
+const signInController = require('../controllers/signInController');
 
 // 导入中间件
 const { authenticateApiKey, authenticateToken, requirePermission } = require('../middleware/auth');
@@ -303,6 +304,37 @@ router.get('/api/v1/training/leaderboard',
     trainingController.getLeaderboard
 );
 
+// ==================== 签到相关路由 ====================
+
+// 获取签到统计数据
+router.get('/api/v1/signin/stats',
+    authenticateToken,
+    requirePermission('user:read'),
+    signInController.getSignInStats
+);
+
+// 获取指定月份签到数据
+router.get('/api/v1/signin/month',
+    authenticateToken,
+    requirePermission('user:read'),
+    [
+        query('year')
+            .isInt({ min: 2020, max: 2030 })
+            .withMessage('年份必须为2020-2030之间的整数'),
+        query('month')
+            .isInt({ min: 1, max: 12 })
+            .withMessage('月份必须为1-12之间的整数')
+    ],
+    signInController.getMonthSignIns
+);
+
+// 执行签到
+router.post('/api/v1/signin',
+    authenticateToken,
+    requirePermission('user:write'),
+    signInController.signIn
+);
+
 // ==================== 帖子相关路由 ====================
 
 // 获取分类列表（公开接口）- 必须在 :id 路由之前
@@ -317,6 +349,12 @@ router.post('/api/v1/posts/upload',
     requirePermission('post:write'),
     uploadSingle,
     postController.uploadMedia
+);
+
+// 获取媒体文件信息
+router.get('/api/v1/posts/media/:filename',
+    requirePermission('post:read'),
+    postController.getMediaInfo
 );
 
 // 获取帖子列表（公开接口，支持未登录用户浏览）

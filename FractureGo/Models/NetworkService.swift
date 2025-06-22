@@ -344,6 +344,84 @@ class NetworkService: ObservableObject {
         }
     }
     
+    // MARK: - 签到相关API
+    
+    /// 获取签到统计数据
+    func getSignInStats(completion: @escaping (Result<SignInStatsResponse, NetworkError>) -> Void) {
+        guard var request = databaseConfig.createURLRequest(for: "/signin/stats", method: .GET) else {
+            completion(.failure(.invalidResponse))
+            return
+        }
+        
+        databaseConfig.addAuthToken(to: &request)
+        
+        databaseConfig.executeRequest(request: request, responseType: APIResponse<SignInStatsResponse>.self) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    if response.success, let data = response.data {
+                        completion(.success(data))
+                    } else {
+                        completion(.failure(.requestFailed(response.message ?? "获取签到统计失败")))
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+    
+    /// 获取指定月份签到数据
+    func getSignInData(year: Int, month: Int, completion: @escaping (Result<SignInDataResponse, NetworkError>) -> Void) {
+        let endpoint = "/signin/month?year=\(year)&month=\(month)"
+        guard var request = databaseConfig.createURLRequest(for: endpoint, method: .GET) else {
+            completion(.failure(.invalidResponse))
+            return
+        }
+        
+        databaseConfig.addAuthToken(to: &request)
+        
+        databaseConfig.executeRequest(request: request, responseType: APIResponse<SignInDataResponse>.self) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    if response.success, let data = response.data {
+                        completion(.success(data))
+                    } else {
+                        completion(.failure(.requestFailed(response.message ?? "获取签到数据失败")))
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+    
+    /// 执行签到
+    func signIn(completion: @escaping (Result<SignInResponse, NetworkError>) -> Void) {
+        guard var request = databaseConfig.createURLRequest(for: "/signin", method: .POST) else {
+            completion(.failure(.invalidResponse))
+            return
+        }
+        
+        databaseConfig.addAuthToken(to: &request)
+        
+        databaseConfig.executeRequest(request: request, responseType: APIResponse<SignInResponse>.self) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    if response.success, let data = response.data {
+                        completion(.success(data))
+                    } else {
+                        completion(.failure(.requestFailed(response.message ?? "签到失败")))
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+    
     // MARK: - 健康检查
     func checkServerHealth(completion: @escaping (Bool) -> Void) {
         databaseConfig.healthCheck { success, _ in
@@ -505,5 +583,38 @@ struct PaginationInfo: Codable {
 }
 
 struct EmptyResponse: Codable {}
+
+// MARK: - 签到相关响应模型
+
+struct SignInStatsResponse: Codable {
+    let totalDays: Int
+    let currentStreak: Int
+    let longestStreak: Int
+    let totalRewards: Int
+}
+
+struct SignInDataResponse: Codable {
+    let year: Int
+    let month: Int
+    let signIns: [SignInRecord]
+}
+
+struct SignInRecord: Codable {
+    let id: Int
+    let day: Int
+    let signInType: String  // "normal", "gift", "target"
+    let rewardPoints: Int
+    let signedAt: String
+}
+
+struct SignInResponse: Codable {
+    let signInId: Int
+    let day: Int
+    let signInType: String
+    let rewardPoints: Int
+    let currentStreak: Int
+    let totalRewards: Int
+    let message: String
+}
 
  

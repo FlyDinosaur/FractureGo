@@ -18,8 +18,6 @@ class Database {
                 waitForConnections: true,
                 connectionLimit: 10,
                 queueLimit: 0,
-                acquireTimeout: 60000,
-                timeout: 60000,
                 reconnect: true,
                 charset: 'utf8mb4',
                 timezone: '+08:00',

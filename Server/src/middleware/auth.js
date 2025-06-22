@@ -127,11 +127,28 @@ const requirePermission = (permission) => {
         let permissions;
         try {
             // 如果permissions已经是数组，直接使用；否则解析JSON
-            permissions = typeof apiKey.permissions === 'string' 
-                ? JSON.parse(apiKey.permissions) 
-                : apiKey.permissions;
+            if (Array.isArray(apiKey.permissions)) {
+                permissions = apiKey.permissions;
+            } else if (typeof apiKey.permissions === 'string') {
+                // 处理空字符串或undefined情况
+                if (apiKey.permissions.trim() === '' || apiKey.permissions === 'undefined') {
+                    console.error('权限配置为空或undefined:', apiKey.permissions);
+                    return res.status(500).json({
+                        success: false,
+                        message: '权限配置为空'
+                    });
+                }
+                permissions = JSON.parse(apiKey.permissions);
+            } else {
+                console.error('权限配置类型错误:', typeof apiKey.permissions, apiKey.permissions);
+                return res.status(500).json({
+                    success: false,
+                    message: '权限配置类型错误'
+                });
+            }
         } catch (error) {
             console.error('权限JSON解析错误:', error);
+            console.error('原始权限数据:', apiKey.permissions);
             return res.status(500).json({
                 success: false,
                 message: '权限配置格式错误'
