@@ -47,8 +47,6 @@ struct MainView: View {
                         .navigationBarHidden(true)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    
-                    Spacer(minLength: 0)
                 }
                 
                 // 底部导航栏 - 完全贴合屏幕底部
