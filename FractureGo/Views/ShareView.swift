@@ -17,7 +17,7 @@ struct ShareView: View {
     @State private var scrollOffset: CGFloat = 0
     
     private let refreshThreshold: CGFloat = 80 // 触发刷新的阈值
-    private let themeColor = Color(hex: "9ecd57") // 主题色
+    private let themeColor = Color.black // 松手刷新颜色改为黑色
     
     var body: some View {
         GeometryReader { geometry in
