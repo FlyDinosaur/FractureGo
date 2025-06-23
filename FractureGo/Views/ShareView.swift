@@ -76,19 +76,16 @@ struct ShareView: View {
                         .refreshable {
                             // 空实现，禁用默认的下拉刷新
                         }
-                        
-                        // 透明的拖拽检测层
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .gesture(
-                                DragGesture(coordinateSpace: .global)
-                                    .onChanged { value in
-                                        handleDragChanged(value)
-                                    }
-                                    .onEnded { value in
-                                        handleDragEnded(value)
-                                    }
-                            )
+                        .gesture(
+                            // 使用ScrollView的手势，只在顶部区域处理下拉刷新
+                            DragGesture(coordinateSpace: .global)
+                                .onChanged { value in
+                                    handleDragChanged(value)
+                                }
+                                .onEnded { value in
+                                    handleDragEnded(value)
+                                }
+                        )
                     }
                 }
                 
@@ -124,15 +121,26 @@ struct ShareView: View {
         // 只有在滚动视图顶部且向下拖拽时才处理下拉刷新
         let translation = value.translation.height
         
-        if scrollOffset >= -5 && translation > 0 && !viewModel.isRefreshing {
+        // 更严格的条件：只有在真正的顶部且向下拖拽时才处理
+        if scrollOffset >= -10 && translation > 10 && !viewModel.isRefreshing && !isDragging {
             isDragging = true
             
             // 使用阻尼效果，让拖拽感觉更自然
-            let dampingFactor: CGFloat = 0.5
-            let adjustedTranslation = translation * dampingFactor
+            let dampingFactor: CGFloat = 0.4
+            let adjustedTranslation = max(0, translation - 10) * dampingFactor
             
             withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.8)) {
                 pullToRefreshOffset = min(adjustedTranslation, refreshThreshold + 30)
+            }
+        }
+        
+        // 如果不满足下拉刷新条件，确保重置状态
+        if !(scrollOffset >= -10 && translation > 10 && !viewModel.isRefreshing) {
+            if isDragging {
+                isDragging = false
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    pullToRefreshOffset = 0
+                }
             }
         }
     }
