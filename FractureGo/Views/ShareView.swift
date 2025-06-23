@@ -500,23 +500,27 @@ struct OptimizedAsyncImage: View {
     @State private var isLoading = true
     @State private var hasError = false
     @State private var loadAttempts = 0
-    @State private var urlRequest: URLRequest?
+    @State private var currentUrl: String = ""
+    @State private var retryTimer: Timer?
+    
+    private let maxRetries = 5 // 增加重试次数
     
     var body: some View {
-        AsyncImage(url: URL(string: url)) { phase in
+        AsyncImage(url: URL(string: currentUrl)) { phase in
             switch phase {
             case .empty:
                 // 加载中状态
                 Rectangle()
                     .fill(Color(.systemGray6))
-                    .frame(width: width, height: width * 0.8) // 默认宽高比
+                    .frame(width: width, height: calculateDefaultHeight())
                     .overlay(
                         VStack(spacing: 4) {
                             ProgressView()
                                 .scaleEffect(0.7)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .gray))
                             Text("加载中")
                                 .font(.caption2)
-                                .foregroundColor(.black)
+                                .foregroundColor(.secondary)
                         }
                     )
                     .clipShape(
@@ -554,23 +558,36 @@ struct OptimizedAsyncImage: View {
                     withAnimation(.easeOut(duration: 0.2)) {
                         isLoading = false
                         hasError = false
+                        loadAttempts = 0 // 重置重试计数
+                        retryTimer?.invalidate()
                     }
                 }
                     
-            case .failure(_):
-                // 加载失败 - 尝试重新加载
-                Button(action: retryLoad) {
+            case .failure(let error):
+                // 加载失败 - 增强重试逻辑
+                Button(action: { 
+                    retryLoad() 
+                }) {
                     Rectangle()
                         .fill(Color(.systemGray5))
-                        .frame(width: width, height: width * 0.8)
+                        .frame(width: width, height: calculateDefaultHeight())
                         .overlay(
-                            VStack(spacing: 4) {
-                                Image(systemName: hasError ? "arrow.clockwise" : "photo")
-                                    .foregroundColor(.gray)
-                                    .font(.title3)
-                                Text(hasError ? "点击重试" : "加载失败")
-                                    .font(.caption2)
-                                    .foregroundColor(.black)
+                            VStack(spacing: 8) {
+                                Image(systemName: hasError ? "arrow.clockwise.circle" : "photo")
+                                    .foregroundColor(.secondary)
+                                    .font(.title2)
+                                
+                                VStack(spacing: 2) {
+                                    Text(hasError ? "点击重试" : "加载失败")
+                                        .font(.caption)
+                                        .foregroundColor(.primary)
+                                    
+                                    if loadAttempts > 0 {
+                                        Text("尝试 \(loadAttempts)/\(maxRetries)")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
                             }
                         )
                         .clipShape(
@@ -582,21 +599,25 @@ struct OptimizedAsyncImage: View {
                             )
                         )
                 }
+                .buttonStyle(PlainButtonStyle())
                 .onAppear { 
-                    hasError = true
-                    // 增加自动重试次数和延迟
-                    if loadAttempts < 5 {
-                        let delay = min(pow(2.0, Double(loadAttempts)), 10.0) // 指数退避，最大10秒
-                        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                            retryLoad()
-                        }
-                    }
+                    handleLoadFailure(error: error)
                 }
                     
             @unknown default:
                 Rectangle()
                     .fill(Color(.systemGray5))
-                    .frame(width: width, height: width * 0.8)
+                    .frame(width: width, height: calculateDefaultHeight())
+                    .overlay(
+                        VStack(spacing: 4) {
+                            Image(systemName: "questionmark.circle")
+                                .foregroundColor(.secondary)
+                                .font(.title3)
+                            Text("未知状态")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    )
                     .clipShape(
                         UnevenRoundedRectangle(
                             topLeadingRadius: 8,
@@ -607,13 +628,108 @@ struct OptimizedAsyncImage: View {
                     )
             }
         }
+        .onAppear {
+            setupImageUrl()
+        }
+        .onDisappear {
+            retryTimer?.invalidate()
+            retryTimer = nil
+        }
         .animation(.easeInOut(duration: 0.3), value: isLoading)
     }
     
+    private func setupImageUrl() {
+        // 提前检查原始URL是否为空
+        guard !url.isEmpty, !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            print("⚠️ 图片URL为空，跳过加载")
+            hasError = true
+            return
+        }
+        
+        let originalUrl = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        print("🖼️ 原始图片路径: \(originalUrl)")
+        
+        // 构建多个备用URL
+        var possibleUrls: [String] = []
+        
+        // 方式1：使用getOptimizedImageURL函数
+        let optimizedUrl = getOptimizedImageURL(originalUrl)
+        if !optimizedUrl.isEmpty {
+            possibleUrls.append(optimizedUrl)
+        }
+        
+        // 方式2：不带优化参数的URL（只有在第一种方式成功时才尝试）
+        if !optimizedUrl.isEmpty {
+            let simpleUrl = getOptimizedImageURL(originalUrl, width: 0, quality: 100)
+            if !simpleUrl.isEmpty && simpleUrl != optimizedUrl {
+                possibleUrls.append(simpleUrl)
+            }
+        }
+        
+        // 方式3：直接拼接（如果不是完整URL且前面的方式都失败）
+        if possibleUrls.isEmpty && !originalUrl.hasPrefix("http") {
+            let cleanPath = originalUrl.hasPrefix("/") ? originalUrl : "/" + originalUrl
+            let directUrl = "http://117.72.161.6:28974" + cleanPath
+            if URL(string: directUrl) != nil {
+                possibleUrls.append(directUrl)
+            }
+        }
+        
+        // 确保至少有一个有效URL
+        guard !possibleUrls.isEmpty else {
+            print("❌ 无法构建有效的图片URL")
+            hasError = true
+            return
+        }
+        
+        // 使用第一个可用的URL
+        currentUrl = possibleUrls.first!
+        
+        print("🔗 可用URL列表:")
+        for (index, url) in possibleUrls.enumerated() {
+            print("   \(index + 1). \(url)")
+        }
+        print("🎯 当前使用: \(currentUrl)")
+    }
+    
+    private func handleLoadFailure(error: Error) {
+        print("🚫 图片加载失败: \(error.localizedDescription), URL: \(currentUrl)")
+        hasError = true
+        
+        // 自动重试逻辑
+        if loadAttempts < maxRetries {
+            loadAttempts += 1
+            let delay = min(pow(2.0, Double(loadAttempts - 1)), 10.0) // 指数退避，最大10秒
+            print("⏱️ 将在\(delay)秒后重试，第\(loadAttempts)次尝试...")
+            
+            // 使用Timer而不是Task.sleep，避免阻塞UI
+            retryTimer?.invalidate()
+            retryTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+                retryLoad()
+            }
+        } else {
+            print("❌ 达到最大重试次数，停止重试")
+        }
+    }
+    
     private func retryLoad() {
-        loadAttempts += 1
-        isLoading = true
+        print("🔄 重试加载图片，第\(loadAttempts)次尝试")
         hasError = false
+        isLoading = true
+        
+        // 触发重新加载
+        let tempUrl = currentUrl
+        currentUrl = ""
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            currentUrl = tempUrl
+        }
+    }
+    
+    private func calculateDefaultHeight() -> CGFloat {
+        if let aspectRatio = aspectRatio {
+            return width * aspectRatio
+        }
+        return width * 0.8 // 默认高度
     }
     
     private func calculateImageHeight(image: Image, targetWidth: CGFloat) -> CGFloat {
@@ -637,11 +753,36 @@ struct PostCard: View {
         VStack(alignment: .leading, spacing: 8) {
             // 封面图片
             ZStack {
-                OptimizedAsyncImage(
-                    url: getOptimizedImageURL(post.coverImage, width: Int(width * 2)), // 2x for retina
-                    aspectRatio: aspectRatio,
-                    width: width
-                )
+                if let coverImage = post.coverImage, !coverImage.isEmpty {
+                    OptimizedAsyncImage(
+                        url: getOptimizedImageURL(coverImage, width: Int(width * 2)), // 2x for retina
+                        aspectRatio: aspectRatio,
+                        width: width
+                    )
+                } else {
+                    // 显示占位图片，而不是尝试加载空URL
+                    Rectangle()
+                        .fill(Color(.systemGray5))
+                        .frame(width: width, height: width * aspectRatio)
+                        .overlay(
+                            VStack(spacing: 8) {
+                                Image(systemName: "photo")
+                                    .foregroundColor(.secondary)
+                                    .font(.title2)
+                                Text("无图片")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        )
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: 8,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: 8
+                            )
+                        )
+                }
                 
                 // 视频播放图标
                 if post.postType == "video" {
@@ -675,14 +816,22 @@ struct PostCard: View {
             // 作者信息
             HStack(spacing: 6) {
                 // 作者头像
-                AsyncImage(url: URL(string: getOptimizedImageURL(post.author.avatar, width: 48, quality: 85))) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Image("default_avator")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
+                Group {
+                    if let avatar = post.author.avatar, !avatar.isEmpty {
+                        AsyncImage(url: URL(string: getOptimizedImageURL(avatar, width: 48, quality: 85))) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Image("default_avator")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        }
+                    } else {
+                        Image("default_avator")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
                 }
                 .frame(width: 20, height: 20)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
@@ -722,36 +871,72 @@ struct PostCard: View {
 
 // 优化的图片URL构建函数，支持更好的错误处理
 func getOptimizedImageURL(_ imagePath: String?, width: Int = 400, quality: Int = 80) -> String {
-    guard let imagePath = imagePath, !imagePath.isEmpty else { return "" }
+    // 更严格的空值检查
+    guard let imagePath = imagePath, 
+          !imagePath.isEmpty, 
+          !imagePath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { 
+        print("⚠️ 图片路径为空或无效")
+        return "" 
+    }
     
-    // 如果已经是完整URL，直接返回
-    if imagePath.hasPrefix("http://") || imagePath.hasPrefix("https://") {
-        return imagePath
+    let cleanPath = imagePath.trimmingCharacters(in: .whitespacesAndNewlines)
+    print("📸 处理图片路径: \(cleanPath)")
+    
+    // 如果已经是完整URL，验证并返回
+    if cleanPath.hasPrefix("http://") || cleanPath.hasPrefix("https://") {
+        guard URL(string: cleanPath) != nil else {
+            print("⚠️ 无效的图片URL: \(cleanPath)")
+            return ""
+        }
+        print("✅ 使用完整URL: \(cleanPath)")
+        return cleanPath
+    }
+    
+    // 使用正确的服务器地址
+    let baseURL = "http://117.72.161.6:28974"
+    var pathComponent = cleanPath
+    
+    // 确保路径格式正确
+    if !pathComponent.hasPrefix("/") {
+        // 如果没有斜杠开头，且不包含uploads，则添加uploads前缀
+        if !pathComponent.contains("/uploads/") {
+            pathComponent = "/uploads/posts/" + pathComponent
+        } else {
+            pathComponent = "/" + pathComponent
+        }
     }
     
     // 构建完整URL
-    let baseURL = "http://117.72.161.6:28974"
-    var fullURL = ""
+    let fullURL = baseURL + pathComponent
     
-    // 如果路径以/开头，直接拼接
-    if imagePath.hasPrefix("/") {
-        fullURL = baseURL + imagePath
-    } else {
-        // 否则添加/uploads/前缀
-        fullURL = baseURL + "/uploads/" + imagePath
+    // 验证构建的URL基础部分
+    guard URL(string: fullURL) != nil else {
+        print("⚠️ 构建的URL无效: \(fullURL)")
+        return ""
     }
     
-    // 添加优化参数，使用jpeg而不是webp以提高兼容性
+    // 如果width为0，返回基础URL（不添加优化参数）
+    if width == 0 {
+        print("🔗 构建基础URL: \(fullURL)")
+        return fullURL
+    }
+    
+    // 添加优化参数
     var queryParams: [String] = []
     queryParams.append("width=\(width)")
     queryParams.append("quality=\(quality)")
     queryParams.append("format=jpeg") // 使用JPEG提高兼容性
     
-    if !queryParams.isEmpty {
-        fullURL += "?" + queryParams.joined(separator: "&")
+    let optimizedURL = fullURL + "?" + queryParams.joined(separator: "&")
+    
+    // 验证最终URL
+    guard URL(string: optimizedURL) != nil else {
+        print("⚠️ 优化URL无效，使用基础URL: \(fullURL)")
+        return fullURL
     }
     
-    return fullURL
+    print("🔗 构建优化URL: \(optimizedURL)")
+    return optimizedURL
 }
 
 #Preview {
