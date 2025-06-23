@@ -76,8 +76,8 @@ struct ShareView: View {
                         .refreshable {
                             // 空实现，禁用默认的下拉刷新
                         }
-                        .gesture(
-                            // 使用ScrollView的手势，只在顶部区域处理下拉刷新
+                        .simultaneousGesture(
+                            // 使用simultaneousGesture确保不干扰ScrollView的滚动
                             DragGesture(coordinateSpace: .global)
                                 .onChanged { value in
                                     handleDragChanged(value)
@@ -121,21 +121,19 @@ struct ShareView: View {
         // 只有在滚动视图顶部且向下拖拽时才处理下拉刷新
         let translation = value.translation.height
         
-        // 更严格的条件：只有在真正的顶部且向下拖拽时才处理
-        if scrollOffset >= -10 && translation > 10 && !viewModel.isRefreshing && !isDragging {
+        // 在顶部且向下拖拽时处理下拉刷新
+        if scrollOffset >= -5 && translation > 0 && !viewModel.isRefreshing {
             isDragging = true
             
             // 使用阻尼效果，让拖拽感觉更自然
-            let dampingFactor: CGFloat = 0.4
-            let adjustedTranslation = max(0, translation - 10) * dampingFactor
+            let dampingFactor: CGFloat = 0.5
+            let adjustedTranslation = translation * dampingFactor
             
             withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.8)) {
                 pullToRefreshOffset = min(adjustedTranslation, refreshThreshold + 30)
             }
-        }
-        
-        // 如果不满足下拉刷新条件，确保重置状态
-        if !(scrollOffset >= -10 && translation > 10 && !viewModel.isRefreshing) {
+        } else if translation <= 0 || scrollOffset < -5 {
+            // 向上拖拽或不在顶部时重置状态
             if isDragging {
                 isDragging = false
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
