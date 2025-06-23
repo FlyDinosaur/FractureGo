@@ -14,8 +14,10 @@ struct ShareView: View {
     @State private var pullToRefreshOffset: CGFloat = 0
     @State private var isRefreshTriggered = false
     @State private var isDragging = false
+    @State private var scrollOffset: CGFloat = 0
     
     private let refreshThreshold: CGFloat = 80 // 触发刷新的阈值
+    private let themeColor = Color(hex: "9ecd57") // 主题色
     
     var body: some View {
         GeometryReader { geometry in
@@ -29,61 +31,70 @@ struct ShareView: View {
                         offset: pullToRefreshOffset,
                         isRefreshing: viewModel.isRefreshing,
                         threshold: refreshThreshold,
-                        isDragging: isDragging
+                        isDragging: isDragging,
+                        themeColor: themeColor
                     )
                     .frame(height: max(0, pullToRefreshOffset))
                     .clipped()
                     
-                    ScrollView {
-                        LazyVStack(spacing: 0, pinnedViews: []) {
-                            // 两列瀑布流内容 - 使用自定义布局
-                            WaterfallLayout(posts: viewModel.posts, geometry: geometry)
-                                .padding(.horizontal)
-                                .padding(.top, 8)
-                            
-                            // 加载更多指示器
-                            if viewModel.isLoading {
-                                HStack {
-                                    Spacer()
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                    Text("加载中...")
-                                        .font(.caption)
-                                        .foregroundColor(.black)
-                                    Spacer()
-                                }
-                                .padding(.vertical, 16)
-                            }
-                        }
-                    }
-                    .background(
-                        GeometryReader { scrollGeometry in
-                            Color.clear
-                                .preference(key: ScrollOffsetPreferenceKey.self, value: scrollGeometry.frame(in: .named("scroll")).minY)
-                        }
-                    )
-                    .coordinateSpace(name: "scroll")
-                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                        handleScrollOffset(value)
-                    }
-                    .simultaneousGesture(
-                        DragGesture()
-                            .onChanged { value in
-                                isDragging = true
-                                if value.translation.height > 0 && pullToRefreshOffset >= 0 {
-                                    pullToRefreshOffset = min(value.translation.height, refreshThreshold + 50)
+                    // 内容区域
+                    ZStack {
+                        ScrollView {
+                            LazyVStack(spacing: 0, pinnedViews: []) {
+                                // 两列瀑布流内容 - 使用自定义布局
+                                WaterfallLayout(posts: viewModel.posts, geometry: geometry)
+                                    .padding(.horizontal)
+                                    .padding(.top, 8)
+                                
+                                // 加载更多指示器
+                                if viewModel.isLoading {
+                                    HStack {
+                                        Spacer()
+                                        ProgressView()
+                                            .scaleEffect(0.8)
+                                            .progressViewStyle(CircularProgressViewStyle(tint: themeColor))
+                                        Text("加载中...")
+                                            .font(.caption)
+                                            .foregroundColor(.black)
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 16)
                                 }
                             }
-                            .onEnded { value in
-                                isDragging = false
-                                handleDragEnd()
-                            }
-                    )
+                            .background(
+                                GeometryReader { scrollGeometry in
+                                    Color.clear
+                                        .preference(key: ScrollOffsetPreferenceKey.self, value: scrollGeometry.frame(in: .named("scroll")).minY)
+                                }
+                            )
+                        }
+                        .coordinateSpace(name: "scroll")
+                        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                            scrollOffset = value
+                            handleScrollOffset(value)
+                        }
+                        .refreshable {
+                            // 空实现，禁用默认的下拉刷新
+                        }
+                        
+                        // 透明的拖拽检测层
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(coordinateSpace: .global)
+                                    .onChanged { value in
+                                        handleDragChanged(value)
+                                    }
+                                    .onEnded { value in
+                                        handleDragEnded(value)
+                                    }
+                            )
+                    }
                 }
                 
                 // 灵动岛风格的刷新成功提示
                 VStack {
-                    RefreshSuccessIndicator(isVisible: $showRefreshSuccess)
+                    RefreshSuccessIndicator(isVisible: $showRefreshSuccess, themeColor: themeColor)
                         .padding(.top, geometry.safeAreaInsets.top + 8)
                         .zIndex(1000) // 确保在最顶层
                     Spacer()
@@ -105,40 +116,61 @@ struct ShareView: View {
     }
     
     private func handleScrollOffset(_ offset: CGFloat) {
-        // 只在用户拖拽时更新偏移量
-        if isDragging && offset > 0 {
-            pullToRefreshOffset = offset
+        // 更新滚动偏移量，但不直接影响下拉刷新
+        scrollOffset = offset
+    }
+    
+    private func handleDragChanged(_ value: DragGesture.Value) {
+        // 只有在滚动视图顶部且向下拖拽时才处理下拉刷新
+        let translation = value.translation.height
+        
+        if scrollOffset >= -5 && translation > 0 && !viewModel.isRefreshing {
+            isDragging = true
+            
+            // 使用阻尼效果，让拖拽感觉更自然
+            let dampingFactor: CGFloat = 0.5
+            let adjustedTranslation = translation * dampingFactor
+            
+            withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.8)) {
+                pullToRefreshOffset = min(adjustedTranslation, refreshThreshold + 30)
+            }
         }
     }
     
-    private func handleDragEnd() {
+    private func handleDragEnded(_ value: DragGesture.Value) {
+        isDragging = false
+        
         if pullToRefreshOffset >= refreshThreshold && !viewModel.isRefreshing {
             // 触发刷新
             isRefreshTriggered = true
             triggerRefresh()
         } else {
             // 没有达到阈值，回弹
-            withAnimation(.easeOut(duration: 0.3)) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 pullToRefreshOffset = 0
             }
         }
     }
     
     private func triggerRefresh() {
+        // 触觉反馈
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+        
         Task {
             await viewModel.refreshPosts()
             
             DispatchQueue.main.async {
                 // 刷新完成后的动画
-                withAnimation(.easeOut(duration: 0.3)) {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                     pullToRefreshOffset = 0
                 }
                 
                 // 刷新成功后显示提示（只有在没有错误且有数据时）
                 if viewModel.errorMessage == nil && !viewModel.posts.isEmpty {
                     // 触觉反馈
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
+                    let successFeedback = UIImpactFeedbackGenerator(style: .light)
+                    successFeedback.impactOccurred()
                     
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                         showRefreshSuccess = true
@@ -163,42 +195,51 @@ struct CustomPullToRefreshHeader: View {
     let isRefreshing: Bool
     let threshold: CGFloat
     let isDragging: Bool
+    let themeColor: Color
     
     @State private var rotationAngle: Double = 0
     
     var body: some View {
         VStack {
-            if offset > 0 {
+            if offset > 5 { // 增加一个小的阈值避免闪烁
                 HStack(spacing: 12) {
                     // 刷新图标
                     ZStack {
                         if isRefreshing {
                             ProgressView()
                                 .scaleEffect(0.8)
-                                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                                .progressViewStyle(CircularProgressViewStyle(tint: themeColor))
                         } else {
                             Image(systemName: "arrow.down")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.blue)
+                                .foregroundColor(themeColor)
                                 .rotationEffect(.degrees(rotationAngle))
-                                .animation(.easeInOut(duration: 0.2), value: rotationAngle)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: rotationAngle)
                         }
                     }
                     .frame(width: 24, height: 24)
                     
                     // 提示文字
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(refreshText)
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.primary)
                         
                         // 进度指示器
-                        ProgressView(value: min(offset / threshold, 1.0))
-                            .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                            .frame(width: 120)
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(themeColor.opacity(0.2))
+                                .frame(width: 120, height: 4)
+                            
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(themeColor)
+                                .frame(width: 120 * min(offset / threshold, 1.0), height: 4)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: offset)
+                        }
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
+                .opacity(min(offset / 20.0, 1.0)) // 渐入效果
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
@@ -219,10 +260,12 @@ struct CustomPullToRefreshHeader: View {
     
     private func updateRotation(for offset: CGFloat) {
         if !isRefreshing {
-            if offset >= threshold {
-                rotationAngle = 180 // 箭头向上
-            } else {
-                rotationAngle = 0 // 箭头向下
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                if offset >= threshold {
+                    rotationAngle = 180 // 箭头向上
+                } else {
+                    rotationAngle = 0 // 箭头向下
+                }
             }
         }
     }
@@ -239,6 +282,7 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
 // 灵动岛风格的刷新成功指示器
 struct RefreshSuccessIndicator: View {
     @Binding var isVisible: Bool
+    let themeColor: Color
     @State private var animationPhase = 0
     @State private var breathingScale: CGFloat = 1.0
     @State private var glowOpacity: Double = 0
@@ -250,13 +294,13 @@ struct RefreshSuccessIndicator: View {
                 ZStack {
                     // 背景光圈
                     Circle()
-                        .fill(.green.opacity(0.2))
+                        .fill(themeColor.opacity(0.2))
                         .frame(width: 24, height: 24)
                         .scaleEffect(breathingScale)
                         .opacity(glowOpacity)
                     
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(themeColor)
                         .font(.system(size: 16, weight: .semibold))
                         .scaleEffect(animationPhase == 1 ? 1.1 : 1.0)
                 }
@@ -270,13 +314,13 @@ struct RefreshSuccessIndicator: View {
                 // 活动指示器
                 ZStack {
                     Circle()
-                        .fill(.green.opacity(0.3))
+                        .fill(themeColor.opacity(0.3))
                         .frame(width: 6, height: 6)
                         .scaleEffect(animationPhase == 2 ? 2.0 : 0.8)
                         .opacity(animationPhase == 2 ? 0 : 1)
                     
                     Circle()
-                        .fill(.green)
+                        .fill(themeColor)
                         .frame(width: 4, height: 4)
                         .scaleEffect(breathingScale * 0.8)
                 }
@@ -296,7 +340,7 @@ struct RefreshSuccessIndicator: View {
                         Capsule()
                             .stroke(
                                 LinearGradient(
-                                    colors: [.green.opacity(0.3), .clear],
+                                    colors: [themeColor.opacity(0.3), .clear],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -305,7 +349,7 @@ struct RefreshSuccessIndicator: View {
                             .opacity(glowOpacity)
                     )
                     .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 4)
-                    .shadow(color: .green.opacity(0.3), radius: 6, x: 0, y: 0)
+                    .shadow(color: themeColor.opacity(0.3), radius: 6, x: 0, y: 0)
             )
             .scaleEffect(isVisible ? 1.0 : 0.3)
             .opacity(isVisible ? 1.0 : 0)
