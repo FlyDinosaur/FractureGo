@@ -15,9 +15,17 @@ struct ShareView: View {
     @State private var isRefreshTriggered = false
     @State private var isDragging = false
     @State private var scrollOffset: CGFloat = 0
+    @State private var isAtTop = true // 标记是否真的在顶部
+    @State private var dragVelocity: CGFloat = 0 // 拖拽速度
+    @State private var lastDragTime: Date = Date() // 上次拖拽时间
+    @State private var lastTranslation: CGFloat = 0 // 上次拖拽距离
     
     private let refreshThreshold: CGFloat = 80 // 触发刷新的阈值
-    private let themeColor = Color.black // 松手刷新颜色改为黑色
+    private let velocityThreshold: CGFloat = 800 // 速度阈值：像素/秒
+    private let minDragDistance: CGFloat = 50 // 最小拖拽距离（提高到50px）
+    private let requiredDragDistance: CGFloat = 520 // 统一需要的位移距离（高速和低速都是520px）
+    private let arrowColor = Color(hex: "9ecd57") // 箭头主题色
+    private let textColor = Color.black // 松手刷新文字颜色
     
     var body: some View {
         GeometryReader { geometry in
@@ -32,7 +40,8 @@ struct ShareView: View {
                         isRefreshing: viewModel.isRefreshing,
                         threshold: refreshThreshold,
                         isDragging: isDragging,
-                        themeColor: themeColor
+                        arrowColor: arrowColor,
+                        textColor: textColor
                     )
                     .frame(height: max(0, pullToRefreshOffset))
                     .clipped()
@@ -51,7 +60,7 @@ struct ShareView: View {
                                     Spacer()
                                     ProgressView()
                                         .scaleEffect(0.8)
-                                        .progressViewStyle(CircularProgressViewStyle(tint: themeColor))
+                                        .progressViewStyle(CircularProgressViewStyle(tint: arrowColor))
                                     Text("加载中...")
                                         .font(.caption)
                                         .foregroundColor(.black)
@@ -88,7 +97,7 @@ struct ShareView: View {
                 
                 // 灵动岛风格的刷新成功提示
                 VStack {
-                    RefreshSuccessIndicator(isVisible: $showRefreshSuccess, themeColor: themeColor)
+                    RefreshSuccessIndicator(isVisible: $showRefreshSuccess, themeColor: arrowColor)
                         .padding(.top, geometry.safeAreaInsets.top + 8)
                         .zIndex(1000) // 确保在最顶层
                     Spacer()
@@ -112,34 +121,74 @@ struct ShareView: View {
     private func handleScrollOffset(_ offset: CGFloat) {
         // 更新滚动偏移量，但不直接影响下拉刷新
         scrollOffset = offset
+        
+        // 更精确地检测是否在顶部
+        // offset >= -1 表示在顶部或接近顶部
+        isAtTop = offset >= -1
     }
     
     private func handleDragChanged(_ value: DragGesture.Value) {
-        // 只有在滚动视图顶部且向下拖拽时才处理下拉刷新
         let translation = value.translation.height
+        let currentTime = Date()
         
-        if scrollOffset >= -5 && translation > 0 && !viewModel.isRefreshing {
+        // 计算拖拽速度（像素/秒）
+        let timeDelta = currentTime.timeIntervalSince(lastDragTime)
+        if timeDelta > 0.001 { // 避免除零错误
+            let translationDelta = translation - lastTranslation
+            dragVelocity = abs(translationDelta) / timeDelta
+        }
+        
+        // 更新记录
+        lastDragTime = currentTime
+        lastTranslation = translation
+        
+        // 检查是否满足大力下滑的条件
+        let isHighVelocity = dragVelocity > velocityThreshold
+        let isHardSwipe = translation > requiredDragDistance // 无论高速低速都需要520px
+        
+        // 严格条件：必须在顶部 + 向下拖拽 + 大力下滑 + 没有在刷新
+        if isAtTop && translation > minDragDistance && isHardSwipe && !viewModel.isRefreshing {
             isDragging = true
             
+            let swipeType = isHighVelocity ? "高速下滑" : "低速大力拖拽"
+            print("🚀 检测到\(swipeType): 速度=\(Int(dragVelocity))px/s, 距离=\(Int(translation))px")
+            
             // 使用阻尼效果，让拖拽感觉更自然
-            let dampingFactor: CGFloat = 0.5
-            let adjustedTranslation = translation * dampingFactor
+            let dampingFactor: CGFloat = 0.4
+            let adjustedTranslation = (translation - minDragDistance) * dampingFactor
             
             withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.8)) {
-                pullToRefreshOffset = min(adjustedTranslation, refreshThreshold + 30)
+                pullToRefreshOffset = min(adjustedTranslation, refreshThreshold + 20)
             }
+        } else if !isAtTop || translation < 0 {
+            // 如果不在顶部或者向上拖拽，重置状态
+            isDragging = false
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                pullToRefreshOffset = 0
+            }
+        } else if isAtTop && translation > 0 && translation <= requiredDragDistance {
+            // 在顶部但拖拽距离不够，显示提示但不激活
+            print("💡 轻微下拉: 速度=\(Int(dragVelocity))px/s, 距离=\(Int(translation))px (需要拖拽到\(Int(requiredDragDistance))px)")
         }
     }
     
     private func handleDragEnded(_ value: DragGesture.Value) {
         isDragging = false
         
-        if pullToRefreshOffset >= refreshThreshold && !viewModel.isRefreshing {
+        // 重置速度相关状态
+        dragVelocity = 0
+        lastTranslation = 0
+        lastDragTime = Date()
+        
+        // 只有在顶部并且达到阈值时才触发刷新
+        if isAtTop && pullToRefreshOffset >= refreshThreshold && !viewModel.isRefreshing {
+            print("✅ 触发刷新: 偏移=\(Int(pullToRefreshOffset))px")
             // 触发刷新
             isRefreshTriggered = true
             triggerRefresh()
         } else {
-            // 没有达到阈值，回弹
+            print("🔄 回弹: 偏移=\(Int(pullToRefreshOffset))px, 阈值=\(Int(refreshThreshold))px")
+            // 没有达到阈值或不在顶部，回弹
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 pullToRefreshOffset = 0
             }
@@ -189,7 +238,8 @@ struct CustomPullToRefreshHeader: View {
     let isRefreshing: Bool
     let threshold: CGFloat
     let isDragging: Bool
-    let themeColor: Color
+    let arrowColor: Color
+    let textColor: Color
     
     @State private var rotationAngle: Double = 0
     
@@ -202,11 +252,11 @@ struct CustomPullToRefreshHeader: View {
                         if isRefreshing {
                             ProgressView()
                                 .scaleEffect(0.8)
-                                .progressViewStyle(CircularProgressViewStyle(tint: themeColor))
+                                .progressViewStyle(CircularProgressViewStyle(tint: arrowColor))
                         } else {
                             Image(systemName: "arrow.down")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeColor)
+                                .foregroundColor(arrowColor)
                                 .rotationEffect(.degrees(rotationAngle))
                                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: rotationAngle)
                         }
@@ -217,16 +267,16 @@ struct CustomPullToRefreshHeader: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(refreshText)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.primary)
+                            .foregroundColor(textColor)
                         
                         // 进度指示器
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(themeColor.opacity(0.2))
+                                .fill(arrowColor.opacity(0.2))
                                 .frame(width: 120, height: 4)
                             
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(themeColor)
+                                .fill(arrowColor)
                                 .frame(width: 120 * min(offset / threshold, 1.0), height: 4)
                                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: offset)
                         }
