@@ -37,9 +37,9 @@ class ShareViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        // 增加重试机制
+        // 减少重试机制，避免对服务器造成过大压力
         var retryCount = 0
-        let maxRetries = 3
+        let maxRetries = 1  // 减少从3次到1次
         
         while retryCount <= maxRetries {
             do {
@@ -64,8 +64,8 @@ class ShareViewModel: ObservableObject {
                 print("🔄 ShareView数据加载失败，第\(retryCount)次尝试: \(error.localizedDescription)")
                 
                 if retryCount <= maxRetries {
-                    // 指数退避延迟，但不超过10秒
-                    let delay = min(pow(2.0, Double(retryCount - 1)), 10.0)
+                    // 更长的延迟时间，减少服务器压力
+                    let delay = min(10.0 * Double(retryCount), 30.0)
                     print("⏱️ 将在\(delay)秒后重试加载数据...")
                     try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                 } else {
@@ -87,9 +87,9 @@ class ShareViewModel: ObservableObject {
         hasMorePages = true
         errorMessage = nil
         
-        // 刷新时也使用重试机制，但重试次数少一些
+        // 刷新时也减少重试机制，避免对服务器造成压力
         var retryCount = 0
-        let maxRetries = 2
+        let maxRetries = 1  // 减少从2次到1次
         
         while retryCount <= maxRetries {
             do {
@@ -118,8 +118,8 @@ class ShareViewModel: ObservableObject {
                 print("🔄 帖子数据刷新失败，第\(retryCount)次尝试: \(error.localizedDescription)")
                 
                 if retryCount <= maxRetries {
-                    // 刷新重试延迟较短
-                    let delay = Double(retryCount) * 1.5
+                    // 刷新重试延迟更长
+                    let delay = 15.0 * Double(retryCount)
                     print("⏱️ 将在\(delay)秒后重试刷新...")
                     try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                 } else {
@@ -231,10 +231,11 @@ class ShareViewModel: ObservableObject {
             baseRatio += 0.1
         }
         
-        // 添加一些随机性以创造瀑布流效果
-        let randomFactor = CGFloat.random(in: 0.8...1.3)
+        // 使用帖子ID作为种子创建稳定的"随机"因子，避免抖动
+        srand48(post.id) // 设置随机种子为帖子ID
+        let stableRandomFactor = CGFloat(drand48() * 0.5 + 0.8) // 生成0.8-1.3之间的稳定值
         
-        return min(max(baseRatio * randomFactor, 0.7), 1.5) // 限制在合理范围内
+        return min(max(baseRatio * stableRandomFactor, 0.7), 1.5) // 限制在合理范围内
     }
     
     // 计算帖子卡片的预计高度
@@ -304,28 +305,3 @@ class PostCardViewModel: ObservableObject {
     }
 }
 
-// 瀑布流布局助手类
-class WaterfallLayoutHelper: ObservableObject {
-    @Published var leftColumnHeight: CGFloat = 0
-    @Published var rightColumnHeight: CGFloat = 0
-    
-    // 决定新卡片应该放在哪一列
-    func getTargetColumn() -> Int {
-        return leftColumnHeight <= rightColumnHeight ? 0 : 1
-    }
-    
-    // 更新列高度
-    func updateColumnHeight(column: Int, height: CGFloat) {
-        if column == 0 {
-            leftColumnHeight += height
-        } else {
-            rightColumnHeight += height
-        }
-    }
-    
-    // 重置高度
-    func reset() {
-        leftColumnHeight = 0
-        rightColumnHeight = 0
-    }
-} 
