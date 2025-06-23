@@ -11,6 +11,11 @@ struct ShareView: View {
     @StateObject private var viewModel = ShareViewModel()
     @State private var selectedCategory: PostCategory?
     @State private var showRefreshSuccess = false
+    @State private var pullToRefreshOffset: CGFloat = 0
+    @State private var isRefreshTriggered = false
+    @State private var isDragging = false
+    
+    private let refreshThreshold: CGFloat = 80 // 触发刷新的阈值
     
     var body: some View {
         GeometryReader { geometry in
@@ -19,8 +24,18 @@ struct ShareView: View {
                 Color(hex: "f5f5f0").ignoresSafeArea()
                 
                 VStack(spacing: 0) {
+                    // 自定义下拉刷新指示器
+                    CustomPullToRefreshHeader(
+                        offset: pullToRefreshOffset,
+                        isRefreshing: viewModel.isRefreshing,
+                        threshold: refreshThreshold,
+                        isDragging: isDragging
+                    )
+                    .frame(height: max(0, pullToRefreshOffset))
+                    .clipped()
+                    
                     ScrollView {
-                                                LazyVStack(spacing: 0, pinnedViews: []) {
+                        LazyVStack(spacing: 0, pinnedViews: []) {
                             // 两列瀑布流内容 - 使用自定义布局
                             WaterfallLayout(posts: viewModel.posts, geometry: geometry)
                                 .padding(.horizontal)
@@ -32,34 +47,38 @@ struct ShareView: View {
                                     Spacer()
                                     ProgressView()
                                         .scaleEffect(0.8)
-                                                                Text("加载中...")
-                                .font(.caption)
-                                .foregroundColor(.black)
+                                    Text("加载中...")
+                                        .font(.caption)
+                                        .foregroundColor(.black)
                                     Spacer()
                                 }
                                 .padding(.vertical, 16)
                             }
                         }
                     }
-                    .refreshable {
-                        await viewModel.refreshPosts()
-                        // 刷新成功后显示提示（只有在没有错误且有数据时）
-                        if viewModel.errorMessage == nil && !viewModel.posts.isEmpty {
-                            // 触觉反馈
-                            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                            impactFeedback.impactOccurred()
-                            
-                            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                                showRefreshSuccess = true
-                            }
-                            // 2.5秒后自动隐藏
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                                withAnimation(.easeInOut(duration: 0.4)) {
-                                    showRefreshSuccess = false
+                    .background(
+                        GeometryReader { scrollGeometry in
+                            Color.clear
+                                .preference(key: ScrollOffsetPreferenceKey.self, value: scrollGeometry.frame(in: .named("scroll")).minY)
+                        }
+                    )
+                    .coordinateSpace(name: "scroll")
+                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                        handleScrollOffset(value)
+                    }
+                    .simultaneousGesture(
+                        DragGesture()
+                            .onChanged { value in
+                                isDragging = true
+                                if value.translation.height > 0 && pullToRefreshOffset >= 0 {
+                                    pullToRefreshOffset = min(value.translation.height, refreshThreshold + 50)
                                 }
                             }
-                        }
-                    }
+                            .onEnded { value in
+                                isDragging = false
+                                handleDragEnd()
+                            }
+                    )
                 }
                 
                 // 灵动岛风格的刷新成功提示
@@ -83,6 +102,137 @@ struct ShareView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+    }
+    
+    private func handleScrollOffset(_ offset: CGFloat) {
+        // 只在用户拖拽时更新偏移量
+        if isDragging && offset > 0 {
+            pullToRefreshOffset = offset
+        }
+    }
+    
+    private func handleDragEnd() {
+        if pullToRefreshOffset >= refreshThreshold && !viewModel.isRefreshing {
+            // 触发刷新
+            isRefreshTriggered = true
+            triggerRefresh()
+        } else {
+            // 没有达到阈值，回弹
+            withAnimation(.easeOut(duration: 0.3)) {
+                pullToRefreshOffset = 0
+            }
+        }
+    }
+    
+    private func triggerRefresh() {
+        Task {
+            await viewModel.refreshPosts()
+            
+            DispatchQueue.main.async {
+                // 刷新完成后的动画
+                withAnimation(.easeOut(duration: 0.3)) {
+                    pullToRefreshOffset = 0
+                }
+                
+                // 刷新成功后显示提示（只有在没有错误且有数据时）
+                if viewModel.errorMessage == nil && !viewModel.posts.isEmpty {
+                    // 触觉反馈
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                        showRefreshSuccess = true
+                    }
+                    // 2.5秒后自动隐藏
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        withAnimation(.easeInOut(duration: 0.4)) {
+                            showRefreshSuccess = false
+                        }
+                    }
+                }
+                
+                isRefreshTriggered = false
+            }
+        }
+    }
+}
+
+// 自定义下拉刷新头部组件
+struct CustomPullToRefreshHeader: View {
+    let offset: CGFloat
+    let isRefreshing: Bool
+    let threshold: CGFloat
+    let isDragging: Bool
+    
+    @State private var rotationAngle: Double = 0
+    
+    var body: some View {
+        VStack {
+            if offset > 0 {
+                HStack(spacing: 12) {
+                    // 刷新图标
+                    ZStack {
+                        if isRefreshing {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                        } else {
+                            Image(systemName: "arrow.down")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.blue)
+                                .rotationEffect(.degrees(rotationAngle))
+                                .animation(.easeInOut(duration: 0.2), value: rotationAngle)
+                        }
+                    }
+                    .frame(width: 24, height: 24)
+                    
+                    // 提示文字
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(refreshText)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.primary)
+                        
+                        // 进度指示器
+                        ProgressView(value: min(offset / threshold, 1.0))
+                            .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+                            .frame(width: 120)
+                    }
+                }
+                .padding(.vertical, 8)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .onChange(of: offset) { oldValue, newValue in
+            updateRotation(for: newValue)
+        }
+    }
+    
+    private var refreshText: String {
+        if isRefreshing {
+            return "正在刷新..."
+        } else if offset >= threshold {
+            return "松手即可刷新"
+        } else {
+            return "下拉刷新"
+        }
+    }
+    
+    private func updateRotation(for offset: CGFloat) {
+        if !isRefreshing {
+            if offset >= threshold {
+                rotationAngle = 180 // 箭头向上
+            } else {
+                rotationAngle = 0 // 箭头向下
+            }
+        }
+    }
+}
+
+// 滚动偏移量监听
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 
@@ -190,8 +340,8 @@ struct RefreshSuccessIndicator: View {
                     }
                 }
             }
-            .onChange(of: isVisible) { visible in
-                if !visible {
+            .onChange(of: isVisible) { oldValue, newValue in
+                if !newValue {
                     // 离场时停止所有动画
                     withAnimation(.none) {
                         breathingScale = 1.0
@@ -290,8 +440,6 @@ struct WaterfallLayout: View {
         return post.id == lastPost.id
     }
 }
-
-
 
 // 改进的异步图片组件
 struct OptimizedAsyncImage: View {
