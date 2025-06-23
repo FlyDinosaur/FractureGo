@@ -118,22 +118,22 @@ struct ShareView: View {
     }
     
     private func handleDragChanged(_ value: DragGesture.Value) {
-        // 只有在滚动视图顶部且向下拖拽时才处理下拉刷新
+        // 只有在滚动视图真正到达顶部且向下拖拽时才处理下拉刷新
         let translation = value.translation.height
         
-        // 在顶部且向下拖拽时处理下拉刷新
-        if scrollOffset >= -5 && translation > 0 && !viewModel.isRefreshing {
+        // 只有在完全到达顶部（scrollOffset >= -2）且向下拖拽超过20px时才开始下拉刷新
+        if scrollOffset >= -2 && translation > 20 && !viewModel.isRefreshing {
             isDragging = true
             
             // 使用阻尼效果，让拖拽感觉更自然
             let dampingFactor: CGFloat = 0.5
-            let adjustedTranslation = translation * dampingFactor
+            let adjustedTranslation = (translation - 20) * dampingFactor // 减去初始的20px
             
             withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.8)) {
                 pullToRefreshOffset = min(adjustedTranslation, refreshThreshold + 30)
             }
-        } else if translation <= 0 || scrollOffset < -5 {
-            // 向上拖拽或不在顶部时重置状态
+        } else if translation <= 20 || scrollOffset < -2 {
+            // 拖拽距离不足或不在顶部时重置状态
             if isDragging {
                 isDragging = false
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -207,7 +207,7 @@ struct CustomPullToRefreshHeader: View {
     
     var body: some View {
         VStack {
-            if offset > 5 { // 增加一个小的阈值避免闪烁
+            if offset > 15 { // 增加阈值，避免过早显示和闪烁
                 HStack(spacing: 12) {
                     // 刷新图标
                     ZStack {
