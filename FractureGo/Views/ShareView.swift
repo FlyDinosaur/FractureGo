@@ -247,19 +247,13 @@ struct CustomPullToRefreshHeader: View {
         VStack {
             if offset > 5 { // 增加一个小的阈值避免闪烁
                 HStack(spacing: 12) {
-                    // 刷新图标
+                    // 刷新图标 - 只显示箭头，移除圆形加载动画
                     ZStack {
-                        if isRefreshing {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .progressViewStyle(CircularProgressViewStyle(tint: arrowColor))
-                        } else {
-                            Image(systemName: "arrow.down")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(arrowColor)
-                                .rotationEffect(.degrees(rotationAngle))
-                                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: rotationAngle)
-                        }
+                        Image(systemName: "arrow.down")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(arrowColor)
+                            .rotationEffect(.degrees(rotationAngle))
+                            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: rotationAngle)
                     }
                     .frame(width: 24, height: 24)
                     

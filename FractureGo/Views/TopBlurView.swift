@@ -9,14 +9,16 @@ import SwiftUI
 
 struct TopBlurView: View {
     var body: some View {
-        // 确保TopBlurView固定在顶部
-        VStack {
-            WaveShape()
-                .fill(Color(hex: "9ecd57"))
-                .frame(height: 160)
-                .ignoresSafeArea(edges: .top)
-            Spacer()
+        GeometryReader { geometry in
+            VStack {
+                WaveShape()
+                    .fill(Color(hex: "9ecd57"))
+                    .frame(width: geometry.size.width, height: 160)
+                    .clipped()
+                Spacer()
+            }
         }
+        .ignoresSafeArea(edges: .top)
     }
 }
 
