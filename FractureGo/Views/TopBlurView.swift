@@ -9,15 +9,21 @@ import SwiftUI
 
 struct TopBlurView: View {
     var body: some View {
-        VStack {
-            WaveShape()
-                .fill(Color(hex: "9ecd57"))
-                .frame(height: 160)
-                .ignoresSafeArea(edges: .top)
-                .clipped()
-            Spacer()
+        // 使用ZStack确保背景透明
+        ZStack {
+            // 完全透明的背景
+            Color.clear
+            
+            // 只显示绿色波浪形状
+            VStack {
+                WaveShape()
+                    .fill(Color(hex: "9ecd57"))
+                    .frame(height: 160)
+                    .clipped()
+                Spacer()
+            }
         }
-        .ignoresSafeArea(.all)
+        .ignoresSafeArea(edges: .top) // 只忽略顶部安全区域
     }
 }
 
@@ -69,5 +75,9 @@ struct WaveShape: Shape {
 }
 
 #Preview {
-    TopBlurView()
+    ZStack {
+        // 预览时显示背景色以便查看效果
+        Color.blue.opacity(0.3)
+        TopBlurView()
+    }
 } 
