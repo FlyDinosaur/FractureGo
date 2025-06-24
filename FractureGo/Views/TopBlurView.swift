@@ -9,21 +9,14 @@ import SwiftUI
 
 struct TopBlurView: View {
     var body: some View {
-        // 使用ZStack确保背景透明
-        ZStack {
-            // 完全透明的背景
-            Color.clear
-            
-            // 只显示绿色波浪形状
-            VStack {
-                WaveShape()
-                    .fill(Color(hex: "9ecd57"))
-                    .frame(height: 160)
-                    .clipped()
-                Spacer()
-            }
+        // 确保TopBlurView固定在顶部
+        VStack {
+            WaveShape()
+                .fill(Color(hex: "9ecd57"))
+                .frame(height: 160)
+                .ignoresSafeArea(edges: .top)
+            Spacer()
         }
-        .ignoresSafeArea(edges: .top) // 只忽略顶部安全区域
     }
 }
 
@@ -37,13 +30,8 @@ struct WaveShape: Shape {
         // 开始点 - 左上角
         path.move(to: CGPoint(x: 0, y: 0))
         
-        // 顶部边缘 - 添加圆角  
-        let topCornerRadius: CGFloat = 25
-        path.addLine(to: CGPoint(x: width - topCornerRadius, y: 0))
-        path.addQuadCurve(
-            to: CGPoint(x: width, y: topCornerRadius),
-            control: CGPoint(x: width, y: 0)
-        )
+        // 顶部边缘 - 直接到右上角，不添加圆角
+        path.addLine(to: CGPoint(x: width, y: 0))
         
         // 右边缘到波浪开始位置
         path.addLine(to: CGPoint(x: width, y: height * 0.55))
@@ -69,6 +57,9 @@ struct WaveShape: Shape {
             control1: CGPoint(x: width * 0.3, y: height * 1.0),
             control2: CGPoint(x: width * 0.15, y: height * 1.0)
         )
+        
+        // 回到左上角闭合路径
+        path.closeSubpath()
         
         return path
     }
