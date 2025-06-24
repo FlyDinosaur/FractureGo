@@ -9,16 +9,18 @@ import SwiftUI
 
 struct TopBlurView: View {
     var body: some View {
-        GeometryReader { geometry in
-            VStack {
-                WaveShape()
-                    .fill(Color(hex: "9ecd57"))
-                    .frame(width: geometry.size.width, height: 160)
-                    .clipped()
-                Spacer()
-            }
-        }
-        .ignoresSafeArea(edges: .top)
+        // 完全透明的背景，只显示绿色波浪
+        Color.clear
+            .background(
+                VStack {
+                    WaveShape()
+                        .fill(Color(hex: "9ecd57"))
+                        .frame(height: 160)
+                        .clipped()
+                    Spacer()
+                }
+                .ignoresSafeArea(edges: .top)
+            )
     }
 }
 

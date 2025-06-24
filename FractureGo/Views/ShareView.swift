@@ -81,9 +81,7 @@ struct ShareView: View {
                         scrollOffset = value
                         handleScrollOffset(value)
                     }
-                    .refreshable {
-                        // 空实现，禁用默认的下拉刷新
-                    }
+                    // 完全移除系统的下拉刷新功能，避免圆形加载动画
                     .simultaneousGesture(
                         DragGesture(coordinateSpace: .global)
                             .onChanged { value in
