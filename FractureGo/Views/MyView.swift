@@ -10,6 +10,10 @@ import SwiftUI
 struct MyView: View {
     var body: some View {
         VStack {
+            // 顶部空白区域 - 为TopBlurView预留空间
+            Spacer()
+                .frame(height: 80)
+            
             Spacer()
             
             Text("MyView")

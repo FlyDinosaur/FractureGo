@@ -14,108 +14,110 @@ struct MainView: View {
     let persistenceController = PersistenceController.shared
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // 背景
-                Color(hex: "f5f5f0").ignoresSafeArea()
-                
-                // 主内容区域 - 占据整个屏幕，居中显示
-                VStack {
-                    // 顶部间距，为波浪形状留空
-                    Spacer()
-                        .frame(height: 80) // 减少顶部间距，让内容更居中
-                    
-                    // 主要内容区域
-                    NavigationView {
-                        ZStack {
-                            // 确保背景色一致
-                            Color(hex: "f5f5f0").ignoresSafeArea()
-                            
-                            switch selectedTab {
-                            case 0:
-                                HomeView()
-                            case 1:
-                                SignInView()
-                            case 2:
-                                CardListView() // 主图标显示卡片列表
-                            case 3:
-                                ShareView()
-                            case 4:
-                                MyView()
-                            default:
-                                HomeView()
-                            }
-                        }
-                        .navigationBarHidden(true)
+        ZStack {
+            // 主要内容 - 使用原生TabView但隐藏原生tabBar
+            TabView(selection: $selectedTab) {
+                HomeView()
+                    .tabItem {
+                        // 隐藏的tabItem
+                        EmptyView()
                     }
-                    .navigationViewStyle(StackNavigationViewStyle()) // 确保使用一致的导航样式
-                    .frame(maxWidth: .infinity)
-                    
-                    // 底部间距，为TabBar留空
-                    Spacer()
-                        .frame(height: 60 + geometry.safeAreaInsets.bottom)
-                }
+                    .tag(0)
                 
-                // 顶部波浪遮挡 - 使用TopBlurView统一实现
+                SignInView()
+                    .tabItem {
+                        EmptyView()
+                    }
+                    .tag(1)
+                
+                CardListView()
+                    .tabItem {
+                        EmptyView()
+                    }
+                    .tag(2)
+                
+                ShareView()
+                    .tabItem {
+                        EmptyView()
+                    }
+                    .tag(3)
+                
+                MyView()
+                    .tabItem {
+                        EmptyView()
+                    }
+                    .tag(4)
+            }
+            .onAppear {
+                // 隐藏原生TabBar
+                UITabBar.appearance().isHidden = true
+            }
+            
+            // 自定义底部导航栏 - overlay在TabView上方
+            VStack(spacing: 0) {
+                Spacer()
+                
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        // Home图标
+                        TabBarItem(
+                            iconName: "home_icon",
+                            isSelected: selectedTab == 0,
+                            isMainIcon: false,
+                            action: { selectedTab = 0 }
+                        )
+                        
+                        // SignIn图标
+                        TabBarItem(
+                            iconName: "SignIn_icon",
+                            isSelected: selectedTab == 1,
+                            isMainIcon: false,
+                            action: { selectedTab = 1 }
+                        )
+                        
+                        // Main图标（中间，更大）
+                        TabBarItem(
+                            iconName: "main_icon",
+                            isSelected: selectedTab == 2,
+                            isMainIcon: true,
+                            action: { selectedTab = 2 }
+                        )
+                        
+                        // Share图标
+                        TabBarItem(
+                            iconName: "Share_icon",
+                            isSelected: selectedTab == 3,
+                            isMainIcon: false,
+                            action: { selectedTab = 3 }
+                        )
+                        
+                        // My图标
+                        TabBarItem(
+                            iconName: "my_icon",
+                            isSelected: selectedTab == 4,
+                            isMainIcon: false,
+                            action: { selectedTab = 4 }
+                        )
+                    }
+                    .frame(height: 50)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(hex: "E3F297"))
+                    
+                    // 底部安全区域 - 确保完全覆盖
+                    Color(hex: "E3F297")
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 35) // 减少底部高度
+                }
+                .background(Color(hex: "E3F297"))
+            }
+            .ignoresSafeArea(.all)
+            
+            // 顶部波浪遮挡 - 使用TopBlurView统一实现
+            VStack {
                 TopBlurView()
                     .allowsHitTesting(false) // 允许点击穿透
-                
-                // 底部导航栏 - 完全贴合屏幕底部
-                VStack(spacing: 0) {
-                    Spacer()
-                    
-                    VStack(spacing: 0) {
-                        HStack(spacing: 0) {
-                            // Home图标
-                            TabBarItem(
-                                iconName: "home_icon",
-                                isSelected: selectedTab == 0,
-                                isMainIcon: false,
-                                action: { selectedTab = 0 }
-                            )
-                            
-                            // SignIn图标
-                            TabBarItem(
-                                iconName: "SignIn_icon",
-                                isSelected: selectedTab == 1,
-                                isMainIcon: false,
-                                action: { selectedTab = 1 }
-                            )
-                            
-                            // Main图标（中间，更大）
-                            TabBarItem(
-                                iconName: "main_icon",
-                                isSelected: selectedTab == 2,
-                                isMainIcon: true,
-                                action: { selectedTab = 2 }
-                            )
-                            
-                            // Share图标
-                            TabBarItem(
-                                iconName: "Share_icon",
-                                isSelected: selectedTab == 3,
-                                isMainIcon: false,
-                                action: { selectedTab = 3 }
-                            )
-                            
-                            // My图标
-                            TabBarItem(
-                                iconName: "my_icon",
-                                isSelected: selectedTab == 4,
-                                isMainIcon: false,
-                                action: { selectedTab = 4 }
-                            )
-                        }
-                        .frame(height: 60)
-                        .background(Color(hex: "E3F297"))
-                        
-                        // 底部安全区域填充
-                        Rectangle()
-                            .fill(Color(hex: "E3F297"))
-                            .frame(height: geometry.safeAreaInsets.bottom)
-                    }
-                }
-                .ignoresSafeArea(edges: .bottom)
+                    .zIndex(1000) // 设置TopBlurView的层级
+                Spacer()
             }
         }
         .navigationBarHidden(true)
@@ -157,7 +159,9 @@ struct TabBarItem: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 60)
+        .frame(height: 50)
+        .buttonStyle(PlainButtonStyle())
+        .contentShape(Rectangle())
     }
 }
 
@@ -168,61 +172,53 @@ struct CardListView: View {
     @State private var showLegLevel = false
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // 明确设置背景色
-                Color(hex: "f5f5f0")
-                    .ignoresSafeArea()
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 35) {
-                        // 顶部间距，确保内容居中
-                        Spacer()
-                            .frame(height: max(20, (geometry.size.height - 500) / 2))
-            
-            // 卡片1 - 手部训练
-            Button(action: {
-                showHandLevel = true
-            }) {
-                CardImageView(imageName: "卡片1", title: "手部训练")
-            }
-            .buttonStyle(PlainButtonStyle())
-            .fullScreenCover(isPresented: $showHandLevel) {
-                HandLevelView()
-            }
-            
-            // 卡片2 - 手臂训练
-            Button(action: {
-                showArmLevel = true
-            }) {
-                CardImageView(imageName: "卡片2", title: "手臂训练")
-            }
-            .buttonStyle(PlainButtonStyle())
-            .fullScreenCover(isPresented: $showArmLevel) {
-                ArmLevelView()
-            }
-            
-            // 卡片3 - 腿部训练
-            Button(action: {
-                showLegLevel = true
-            }) {
-                CardImageView(imageName: "卡片3", title: "腿部训练")
-            }
-            .buttonStyle(PlainButtonStyle())
-            .fullScreenCover(isPresented: $showLegLevel) {
-                LegLevelView()
-            }
-            
-                        // 底部间距，确保内容居中
+        VStack {
+            // 顶部空白区域 - 为TopBlurView预留空间
             Spacer()
-                            .frame(height: max(20, (geometry.size.height - 500) / 2))
-        }
-                    .padding(.horizontal, 24) // 增加左右边距
-                    .frame(minHeight: geometry.size.height) // 确保ScrollView内容至少有屏幕高度
+                .frame(height: 60)
+            
+            Spacer() // 自动填充上方空间
+            
+            VStack(spacing: 35) {
+                // 卡片1 - 手部训练
+                Button(action: {
+                    showHandLevel = true
+                }) {
+                    CardImageView(imageName: "卡片1", title: "手部训练")
+                }
+                .buttonStyle(PlainButtonStyle())
+                .fullScreenCover(isPresented: $showHandLevel) {
+                    HandLevelView()
+                }
+                
+                // 卡片2 - 手臂训练
+                Button(action: {
+                    showArmLevel = true
+                }) {
+                    CardImageView(imageName: "卡片2", title: "手臂训练")
+                }
+                .buttonStyle(PlainButtonStyle())
+                .fullScreenCover(isPresented: $showArmLevel) {
+                    ArmLevelView()
+                }
+                
+                // 卡片3 - 腿部训练
+                Button(action: {
+                    showLegLevel = true
+                }) {
+                    CardImageView(imageName: "卡片3", title: "腿部训练")
+                }
+                .buttonStyle(PlainButtonStyle())
+                .fullScreenCover(isPresented: $showLegLevel) {
+                    LegLevelView()
                 }
             }
+            .padding(.horizontal, 24) // 左右边距
+            
+            Spacer() // 自动填充下方空间
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(hex: "f5f5f0"))
     }
 }
 

@@ -87,6 +87,9 @@ class ShareViewModel: ObservableObject {
         hasMorePages = true
         errorMessage = nil
         
+        // 刷新时清空当前帖子列表，确保完全重新加载
+        self.posts = []
+        
         // 刷新时也减少重试机制，避免对服务器造成压力
         var retryCount = 0
         let maxRetries = 1  // 减少从2次到1次
@@ -272,6 +275,11 @@ class ImageCacheManager: ObservableObject {
     
     func clearCache() {
         cache.removeAllObjects()
+        
+        // 清理AsyncImage的内置缓存
+        URLCache.shared.removeAllCachedResponses()
+        
+        print("🧹 图片缓存已清理：NSCache + URLCache")
     }
 }
 

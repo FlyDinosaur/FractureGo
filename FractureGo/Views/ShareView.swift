@@ -19,6 +19,8 @@ struct ShareView: View {
     @State private var dragVelocity: CGFloat = 0 // 拖拽速度
     @State private var lastDragTime: Date = Date() // 上次拖拽时间
     @State private var lastTranslation: CGFloat = 0 // 上次拖拽距离
+    @State private var globalRefreshTrigger = false // 全局刷新触发器，用于强制重新加载图片
+    @State private var scrollStabilizationTimer: Timer? // 滚动稳定计时器
     
     private let refreshThreshold: CGFloat = 80 // 触发刷新的阈值
     private let velocityThreshold: CGFloat = 800 // 速度阈值：像素/秒
@@ -34,21 +36,13 @@ struct ShareView: View {
                 Color(hex: "f5f5f0").ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // 自定义下拉刷新指示器
-                    CustomPullToRefreshHeader(
-                        offset: pullToRefreshOffset,
-                        isRefreshing: viewModel.isRefreshing,
-                        threshold: refreshThreshold,
-                        isDragging: isDragging,
-                        arrowColor: arrowColor,
-                        textColor: textColor
-                    )
-                    .frame(height: max(0, pullToRefreshOffset))
-                    .clipped()
-                    
-                    // 内容区域
+                    // 内容区域 - 移除内嵌的下拉刷新组件
                     ScrollView {
                         LazyVStack(spacing: 0, pinnedViews: []) {
+                            // 顶部空白区域 - 为TopBlurView预留空间
+                            Spacer()
+                                .frame(height: 80)
+                            
                             // 两列瀑布流内容 - 使用自定义布局
                             WaterfallLayout(posts: viewModel.posts, geometry: geometry)
                                 .padding(.horizontal)
@@ -68,6 +62,10 @@ struct ShareView: View {
                                 }
                                 .padding(.vertical, 16)
                             }
+                            
+                            // 底部空白区域 - 为底部导航栏预留空间
+                            Spacer()
+                                .frame(height: 100) // 预留足够空间避免被底部导航栏遮挡
                         }
                         .background(
                             GeometryReader { scrollGeometry in
@@ -93,11 +91,32 @@ struct ShareView: View {
                     )
                 }
                 
+                // 下拉刷新指示器 - 移到ZStack顶层
+                VStack {
+                    // 为TopBlurView留出空间，然后显示下拉刷新
+                    Spacer()
+                        .frame(height: 60) // 在TopBlurView下方一点位置显示
+                    
+                    CustomPullToRefreshHeader(
+                        offset: pullToRefreshOffset,
+                        isRefreshing: viewModel.isRefreshing,
+                        threshold: refreshThreshold,
+                        isDragging: isDragging,
+                        arrowColor: arrowColor,
+                        textColor: textColor
+                    )
+                    .frame(height: max(0, pullToRefreshOffset))
+                    .clipped()
+                    
+                    Spacer()
+                }
+                .zIndex(1001) // 确保在TopBlurView之上显示
+                
                 // 灵动岛风格的刷新成功提示
                 VStack {
                     RefreshSuccessIndicator(isVisible: $showRefreshSuccess, themeColor: arrowColor)
                         .padding(.top, geometry.safeAreaInsets.top + 8)
-                        .zIndex(1000) // 确保在最顶层
+                        .zIndex(1002) // 确保在最顶层，比下拉刷新更高
                     Spacer()
                 }
             }
@@ -114,6 +133,10 @@ struct ShareView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .onDisappear {
+            // 清理定时器
+            scrollStabilizationTimer?.invalidate()
+        }
     }
     
     private func handleScrollOffset(_ offset: CGFloat) {
@@ -123,6 +146,14 @@ struct ShareView: View {
         // 更精确地检测是否在顶部
         // offset >= -1 表示在顶部或接近顶部
         isAtTop = offset >= -1
+        
+        // 滚动稳定检测 - 当滚动停止1秒后触发图片重试
+        scrollStabilizationTimer?.invalidate()
+        scrollStabilizationTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+            DispatchQueue.main.async {
+                triggerImageRetryAfterScrollStabilization()
+            }
+        }
     }
     
     private func handleDragChanged(_ value: DragGesture.Value) {
@@ -190,6 +221,15 @@ struct ShareView: View {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 pullToRefreshOffset = 0
             }
+            
+            // 拖拽结束后也触发滚动稳定检测
+            scrollStabilizationTimer?.invalidate()
+            scrollStabilizationTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { _ in
+                DispatchQueue.main.async {
+                    print("🔄 拖拽结束后的滚动稳定检测")
+                    self.triggerImageRetryAfterScrollStabilization()
+                }
+            }
         }
     }
     
@@ -197,6 +237,8 @@ struct ShareView: View {
         // 触觉反馈
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
+        
+        // 触发刷新
         
         Task {
             await viewModel.refreshPosts()
@@ -216,17 +258,30 @@ struct ShareView: View {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                         showRefreshSuccess = true
                     }
-                    // 2.5秒后自动隐藏
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    // 1秒后自动隐藏
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         withAnimation(.easeInOut(duration: 0.4)) {
                             showRefreshSuccess = false
                         }
                     }
+                    
+                    // 延迟触发图片刷新，确保帖子数据已经更新
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        globalRefreshTrigger.toggle()
+                        print("🔄 触发图片全局刷新")
+                    }
                 }
-                
-                isRefreshTriggered = false
             }
         }
+    }
+    
+    private func triggerImageRetryAfterScrollStabilization() {
+        print("📱 滚动已稳定，通知需要重试的图片组件")
+        // 通过发送通知来触发需要重试的图片组件
+        NotificationCenter.default.post(name: NSNotification.Name("ScrollStabilized"), object: nil)
+        
+        // 额外日志
+        print("📱 已发送ScrollStabilized通知")
     }
 }
 
@@ -530,10 +585,14 @@ struct OptimizedAsyncImage: View {
     @State private var isLoading = true
     @State private var hasError = false
     @State private var loadAttempts = 0
-    @State private var urlRequest: URLRequest?
+    @State private var imageURL: URL?
+    @State private var stableID = UUID() // 稳定ID，避免频繁重建
+    @State private var wasVisible = false // 跟踪组件是否曾经可见
+    @State private var needsRetryAfterCancel = false // 标记是否需要在取消后重试
     
     var body: some View {
-        AsyncImage(url: URL(string: url)) { phase in
+        // 只有在URL确实改变时才重新构建
+        AsyncImage(url: imageURL) { phase in
             switch phase {
             case .empty:
                 // 加载中状态
@@ -543,12 +602,32 @@ struct OptimizedAsyncImage: View {
                     .overlay(
                         VStack(spacing: 4) {
                             ProgressView()
-                                .scaleEffect(0.7)
-                            Text("加载中")
-                                .font(.caption2)
-                                .foregroundColor(.black)
+                                .scaleEffect(0.8)
+                            if loadAttempts > 0 {
+                                Text("重试中(\(loadAttempts)/3)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     )
+                    .onAppear {
+                        isLoading = true
+                        hasError = false
+                        wasVisible = true
+                        // 设置或重新设置URL
+                        if !url.isEmpty && imageURL == nil {
+                            imageURL = URL(string: url)
+                            print("📱 空状态设置图片URL: \(url)")
+                        }
+                    }
+                
+            case .success(let image):
+                // 成功加载 - 保持图片原始长宽比
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: width)
+                    .clipped()
                     .clipShape(
                         UnevenRoundedRectangle(
                             topLeadingRadius: 8,
@@ -557,76 +636,49 @@ struct OptimizedAsyncImage: View {
                             topTrailingRadius: 8
                         )
                     )
-                    .onAppear { 
-                        isLoading = true 
-                        hasError = false
-                    }
-                    
-            case .success(let image):
-                // 成功加载
-                GeometryReader { imageGeometry in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: width, height: calculateImageHeight(image: image, targetWidth: width))
-                        .clipShape(
-                            UnevenRoundedRectangle(
-                                topLeadingRadius: 8,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 8
-                            )
-                        )
-                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                }
-                .frame(width: width, height: calculateImageHeight(image: image, targetWidth: width))
-                .onAppear {
-                    withAnimation(.easeOut(duration: 0.2)) {
+                    .onAppear {
                         isLoading = false
                         hasError = false
+                        loadAttempts = 0
+                        needsRetryAfterCancel = false // 成功加载后清除重试标记
+                        print("✅ 图片加载成功: \(url)")
                     }
-                }
-                    
-            case .failure(_):
-                // 加载失败 - 尝试重新加载
-                Button(action: retryLoad) {
-                    Rectangle()
-                        .fill(Color(.systemGray5))
-                        .frame(width: width, height: width * 0.8)
-                        .overlay(
-                            VStack(spacing: 4) {
-                                Image(systemName: hasError ? "arrow.clockwise" : "photo")
-                                    .foregroundColor(.gray)
-                                    .font(.title3)
-                                Text(hasError ? "点击重试" : "加载失败")
-                                    .font(.caption2)
-                                    .foregroundColor(.black)
-                            }
-                        )
-                        .clipShape(
-                            UnevenRoundedRectangle(
-                                topLeadingRadius: 8,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 8
-                            )
-                        )
-                }
-                .onAppear { 
-                    hasError = true
-                    // 增加自动重试次数和延迟
-                    if loadAttempts < 5 {
-                        let delay = min(pow(2.0, Double(loadAttempts)), 10.0) // 指数退避，最大10秒
-                        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                            retryLoad()
-                        }
-                    }
-                }
-                    
-            @unknown default:
+                
+            case .failure(let error):
+                // 加载失败
                 Rectangle()
                     .fill(Color(.systemGray5))
                     .frame(width: width, height: width * 0.8)
+                    .overlay(
+                        VStack(spacing: 8) {
+                            Image(systemName: "photo")
+                                .font(.title2)
+                                .foregroundColor(.gray)
+                            
+                            if let nsError = error as NSError?, nsError.code == -999 {
+                                // 请求被取消，显示轻量提示并标记需要重试
+                                Text("正在加载...")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .onAppear {
+                                        needsRetryAfterCancel = true
+                                    }
+                            } else {
+                                // 其他错误，显示重试选项
+                                if loadAttempts < 3 {
+                                    Button("重试 (\(loadAttempts + 1)/3)") {
+                                        retryLoad()
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                                } else {
+                                    Text("加载失败")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    )
                     .clipShape(
                         UnevenRoundedRectangle(
                             topLeadingRadius: 8,
@@ -635,24 +687,97 @@ struct OptimizedAsyncImage: View {
                             topTrailingRadius: 8
                         )
                     )
+                    .onAppear {
+                        isLoading = false
+                        hasError = true
+                        handleLoadError(error)
+                    }
+                
+            @unknown default:
+                // 未知状态
+                Rectangle()
+                    .fill(Color(.systemGray6))
+                    .frame(width: width, height: width * 0.8)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: isLoading)
+        .id(stableID) // 使用稳定ID，减少重建
+        .onAppear {
+            // 组件变为可见时的处理
+            wasVisible = true
+            print("📱 图片组件出现: \(url), needsRetryAfterCancel=\(needsRetryAfterCancel)")
+            
+            // 如果之前被取消且需要重试，立即重试
+            if needsRetryAfterCancel && !url.isEmpty {
+                print("📱 组件出现时立即重试: \(url)")
+                retryAfterCancel()
+            } else if imageURL == nil && !url.isEmpty {
+                // 初始化时设置URL
+                imageURL = URL(string: url)
+                print("📱 初始化图片URL: \(url)")
+            }
+        }
+        .onDisappear {
+            // 组件不可见时清除重试标记，避免不必要的重试
+            needsRetryAfterCancel = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ScrollStabilized"))) { _ in
+            // 接收到滚动稳定通知时，如果需要重试则立即重试
+            print("📱 \(url) 收到滚动稳定通知，needsRetryAfterCancel=\(needsRetryAfterCancel), wasVisible=\(wasVisible)")
+            if needsRetryAfterCancel && wasVisible && !url.isEmpty {
+                print("📱 收到滚动稳定通知，重试图片: \(url)")
+                retryAfterCancel()
+            }
+        }
     }
     
     private func retryLoad() {
+        guard loadAttempts < 3 else { return }
+        
         loadAttempts += 1
-        isLoading = true
-        hasError = false
+        print("🔄 手动重试加载图片: \(url) (第\(loadAttempts)次尝试)")
+        
+        // 重新设置URL来触发重新加载
+        imageURL = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            imageURL = URL(string: url)
+        }
     }
     
-    private func calculateImageHeight(image: Image, targetWidth: CGFloat) -> CGFloat {
-        // 使用传入的aspectRatio计算高度
-        if let aspectRatio = aspectRatio {
-            return targetWidth * aspectRatio
+    private func retryAfterCancel() {
+        guard !url.isEmpty else { return }
+        
+        needsRetryAfterCancel = false
+        print("🔄 取消后重试加载图片: \(url)")
+        
+        // 重新设置URL来触发重新加载
+        imageURL = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            if self.wasVisible { // 只有在组件仍然可见时才重试
+                self.imageURL = URL(string: self.url)
+                print("🔄 已重新设置图片URL: \(self.url)")
+            } else {
+                print("🔄 组件不可见，跳过重试: \(self.url)")
+            }
         }
-        // 如果没有指定aspectRatio，使用合理的默认高度
-        return targetWidth * 1.0
+    }
+    
+    private func handleLoadError(_ error: Error) {
+        if let nsError = error as NSError?, nsError.code == -999 {
+            print("⚠️ 图片加载被取消: \(url), 将在稳定后自动重试")
+            // 对于取消错误，标记需要重试但不立即重试
+            needsRetryAfterCancel = true
+            return
+        }
+        
+        print("❌ 图片加载失败: \(url), 错误: \(error.localizedDescription)")
+        
+        // 对于真正的网络错误，谨慎重试
+        if loadAttempts < 1 { // 只自动重试1次
+            let delay = 2.0 // 固定2秒延迟
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                retryLoad()
+            }
+        }
     }
 }
 
@@ -663,8 +788,11 @@ struct PostCard: View {
     let aspectRatio: CGFloat
     @StateObject private var viewModel = PostCardViewModel()
     
+    // 为每个卡片创建稳定ID，减少重建
+    private let cardID = UUID()
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 0) {
             // 封面图片
             ZStack {
                 OptimizedAsyncImage(
@@ -694,56 +822,59 @@ struct PostCard: View {
                 }
             }
             
-            // 标题
-            Text(post.title)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.black)
-                .lineLimit(3)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-            
-            // 作者信息
-            HStack(spacing: 6) {
-                // 作者头像
-                AsyncImage(url: URL(string: getOptimizedImageURL(post.author.avatar, width: 48, quality: 85))) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Image("default_avator")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                }
-                .frame(width: 20, height: 20)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.white, lineWidth: 0.5)
-                )
-                
-                // 作者昵称
-                Text(post.author.nickname)
-                    .font(.caption)
+            // 信息区域
+            VStack(alignment: .leading, spacing: 6) {
+                // 标题
+                Text(post.title)
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.black)
+                    .lineLimit(3)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                
+                // 用户名
+                Text(post.author.nickname)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundColor(.gray)
                     .lineLimit(1)
                 
-                Spacer()
-                
-                // 分类标签（仅显示，不可点击）
-                if let category = post.category {
-                    Text(category.name)
-                        .font(.caption2)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(Color(hex: category.color).opacity(0.1))
-                        .foregroundColor(Color(hex: category.color))
-                        .cornerRadius(3)
+                // 标签和点赞信息
+                HStack(spacing: 8) {
+                    // 分类标签
+                    if let category = post.category {
+                        Text(category.name)
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color(hex: category.color).opacity(0.1))
+                            .foregroundColor(Color(hex: category.color))
+                            .cornerRadius(4)
+                    }
+                    
+                    Spacer()
+                    
+                    // 点赞图标和数量
+                    HStack(spacing: 3) {
+                        Image(systemName: viewModel.isLiked ? "heart.fill" : "heart")
+                            .foregroundColor(viewModel.isLiked ? .red : .gray)
+                            .font(.system(size: 12))
+                        
+                        Text("\(viewModel.likeCount)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .onTapGesture {
+                        Task {
+                            await viewModel.toggleLike(for: post.id)
+                        }
+                    }
                 }
             }
         }
         .padding(10)
         .background(Color.clear)
         .cornerRadius(10)
+        .id(post.id) // 使用帖子ID作为稳定标识
         .onAppear {
             viewModel.setup(post: post)
         }

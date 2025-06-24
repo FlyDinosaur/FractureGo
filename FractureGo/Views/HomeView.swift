@@ -37,6 +37,10 @@ struct HomeView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            // 顶部空白区域 - 为TopBlurView预留空间
+            Spacer()
+                .frame(height: 100)
+            
             // 标题区域
             VStack(spacing: 10) {
                 Text(trainings[currentIndex].title)

@@ -253,7 +253,7 @@ struct CalendarSignInCardView: View {
                 )
             }
             .padding(.horizontal, 18) // 整体左右留白
-            .padding(.top, 30) // 增大与顶部遮盖的间距
+            .padding(.top, 100) // 增大与顶部遮盖的间距
             
             // 错误信息显示
             if let errorMessage = errorMessage {
@@ -268,7 +268,6 @@ struct CalendarSignInCardView: View {
             
             Spacer()
         }
-        .edgesIgnoringSafeArea(.top) // 让内容扩展到顶部
         .background(Color(hex: "f5f5f0").ignoresSafeArea())
         .navigationBarHidden(true)
         .sheet(isPresented: $showPicker) {
