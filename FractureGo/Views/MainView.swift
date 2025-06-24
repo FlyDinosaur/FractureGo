@@ -56,15 +56,9 @@ struct MainView: View {
                         .frame(height: 60 + geometry.safeAreaInsets.bottom)
                 }
                 
-                // 顶部波浪遮挡 - 作为覆盖层
-                VStack {
-                    WaveShape()
-                        .fill(Color(hex: "9ecd57"))
-                        .frame(height: 160)
-                        .ignoresSafeArea(edges: .top)
-                    
-                    Spacer()
-                }
+                // 顶部波浪遮挡 - 使用TopBlurView统一实现
+                TopBlurView()
+                    .allowsHitTesting(false) // 允许点击穿透
                 
                 // 底部导航栏 - 完全贴合屏幕底部
                 VStack(spacing: 0) {
