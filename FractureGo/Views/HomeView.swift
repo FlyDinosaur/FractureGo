@@ -99,7 +99,7 @@ struct HomeView: View {
                         Image(systemName: "chevron.left")
                             .font(.title3)
                             .foregroundColor(Color(hex: trainings[currentIndex].arrowColor))
-                        Text("...")
+                        Text("---")
                             .font(.title3)
                             .foregroundColor(Color(hex: trainings[currentIndex].arrowColor))
                     }
@@ -114,7 +114,7 @@ struct HomeView: View {
                     }
                 }) {
                     HStack(spacing: 5) {
-                        Text("...")
+                        Text("---")
                             .font(.title3)
                             .foregroundColor(Color(hex: trainings[currentIndex].arrowColor))
                         Image(systemName: "chevron.right")

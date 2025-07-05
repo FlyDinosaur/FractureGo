@@ -20,6 +20,14 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      config.build_settings['OTHER_LDFLAGS'] = '-ObjC'
+      
+      # MediaPipe特定配置
+      if target.name.start_with?('MediaPipe')
+        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
     end
   end
-end 
+end
