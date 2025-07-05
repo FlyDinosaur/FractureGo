@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_图层_2" data-name="图层 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35.36 39.74">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #97612d;
+      }
+
+      .cls-2 {
+        fill: #9ddc6d;
+      }
+
+      .cls-3 {
+        fill: #ca966b;
+      }
+
+      .cls-4 {
+        fill: #9c612f;
+      }
+
+      .cls-5 {
+        fill: #b1783f;
+      }
+    </style>
+  </defs>
+  <g id="_图层_4" data-name="图层 4">
+    <g>
+      <g>
+        <rect class="cls-4" x="0" y="3.77" width="35.36" height="35.98" rx="17.68" ry="17.68"/>
+        <rect class="cls-3" x="0" y="0" width="35.36" height="35.4" rx="17.22" ry="17.22"/>
+        <rect class="cls-1" x="5.34" y="5.62" width="24.68" height="23.85" rx="11.93" ry="11.93"/>
+        <rect class="cls-5" x="5.34" y="7.63" width="24.68" height="22.52" rx="11.26" ry="11.26"/>
+      </g>
+      <polygon class="cls-2" points="27.08 15.07 23.95 11.94 16.2 19.68 11.41 14.89 8.28 18.02 16.11 25.84 16.2 25.74 16.3 25.84 27.08 15.07"/>
+    </g>
+  </g>
+</svg>

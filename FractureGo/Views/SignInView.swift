@@ -132,7 +132,7 @@ class SignInDataManager: ObservableObject {
     
     private func handleNetworkError(_ error: NetworkError) -> String {
         switch error {
-        case .      noConnection:
+        case .noConnection:
             return "网络连接失败，请检查网络设置"
         case .requestFailed(let message):
             return message
