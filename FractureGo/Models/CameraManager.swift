@@ -59,7 +59,12 @@ class CameraManager: NSObject, ObservableObject {
     
     /// 启动摄像头会话
     func startSession() {
-        guard captureSession == nil else { return }
+        guard captureSession == nil else {
+            print("⚠️ 摄像头会话已经存在，跳过启动")
+            return
+        }
+        
+        print("🎥 开始启动摄像头会话...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.setupCaptureSession()
@@ -75,39 +80,55 @@ class CameraManager: NSObject, ObservableObject {
     
     /// 设置摄像头捕获会话
     private func setupCaptureSession() {
+        print("🔧 开始设置摄像头捕获会话...")
+        
         let session = AVCaptureSession()
         session.sessionPreset = .medium
+        print("📱 设置会话预设为 medium")
         
-        // 添加后置摄像头输入
-        guard let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
-              let input = try? AVCaptureDeviceInput(device: backCamera) else {
-            print("❌ 无法访问后置摄像头")
+        // 添加前置摄像头输入
+        guard let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
+              let input = try? AVCaptureDeviceInput(device: frontCamera) else {
+            print("❌ 无法访问前置摄像头")
             return
         }
         
+        print("✅ 成功获取前置摄像头设备: \(frontCamera.localizedName)")
+        
         if session.canAddInput(input) {
             session.addInput(input)
+            print("✅ 成功添加摄像头输入")
+        } else {
+            print("❌ 无法添加摄像头输入到会话")
+            return
         }
         
         // 添加视频输出
         let output = AVCaptureVideoDataOutput()
         output.setSampleBufferDelegate(self, queue: DispatchQueue.global(qos: .userInitiated))
         output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+        print("🎬 配置视频输出设置")
         
         if session.canAddOutput(output) {
             session.addOutput(output)
             videoOutput = output
+            print("✅ 成功添加视频输出")
+        } else {
+            print("❌ 无法添加视频输出到会话")
+            return
         }
         
         // 创建预览层
         let preview = AVCaptureVideoPreviewLayer(session: session)
         preview.videoGravity = .resizeAspectFill
+        print("🖼️ 创建预览层")
         
         DispatchQueue.main.async {
             self.previewLayer = preview
             self.captureSession = session
             session.startRunning()
-            print("✅ 摄像头会话启动成功")
+            print("✅ 摄像头会话启动成功，开始运行")
+            print("📊 会话状态: \(session.isRunning ? "运行中" : "已停止")")
         }
     }
     
@@ -148,9 +169,8 @@ extension CameraManager: HandLandmarkerLiveStreamDelegate {
             return
         }
         
-        guard let result = result,
-              let firstHand = result.landmarks.first else {
-            // 没有检测到手部
+        guard let result = result else {
+            print("⚠️ 手部检测结果为空")
             DispatchQueue.main.async {
                 self.isHandClenched = false
                 self.handLandmarks = []
@@ -159,8 +179,31 @@ extension CameraManager: HandLandmarkerLiveStreamDelegate {
             return
         }
         
+        if result.landmarks.isEmpty {
+            print("⚠️ 未检测到手部关键点")
+            DispatchQueue.main.async {
+                self.isHandClenched = false
+                self.handLandmarks = []
+                self.onHandGestureDetected?(false)
+            }
+            return
+        }
+        
+        let firstHand = result.landmarks[0]
+        print("✅ 检测到手部关键点，数量: \(firstHand.count)")
+        
         // 检测握拳状态
         let isClenched = handGestureDetector.isHandClenched(landmarks: firstHand)
+        print("🤜 握拳检测结果: \(isClenched ? "握拳" : "张开")")
+        
+        // 打印关键点位置用于调试
+        if firstHand.count >= 21 {
+            let wrist = firstHand[0]
+            let thumbTip = firstHand[4]
+            let indexTip = firstHand[8]
+            let middleTip = firstHand[12]
+            print("📍 关键点位置 - 手腕: (\(String(format: "%.3f", wrist.x)), \(String(format: "%.3f", wrist.y))), 拇指尖: (\(String(format: "%.3f", thumbTip.x)), \(String(format: "%.3f", thumbTip.y))), 食指尖: (\(String(format: "%.3f", indexTip.x)), \(String(format: "%.3f", indexTip.y))), 中指尖: (\(String(format: "%.3f", middleTip.x)), \(String(format: "%.3f", middleTip.y)))")
+        }
         
         DispatchQueue.main.async {
             self.isHandClenched = isClenched

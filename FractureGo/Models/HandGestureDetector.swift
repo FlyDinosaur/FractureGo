@@ -15,7 +15,12 @@ class HandGestureDetector {
     /// - Parameter landmarks: 手部21个关键点数据
     /// - Returns: 是否为握拳状态
     func isHandClenched(landmarks: [NormalizedLandmark]) -> Bool {
-        guard landmarks.count >= 21 else { return false }
+        guard landmarks.count >= 21 else {
+            print("❌ 手部关键点数量不足: \(landmarks.count)")
+            return false
+        }
+        
+        print("🔍 开始握拳检测分析...")
         
         // 手部关键点索引定义
         let wrist = landmarks[0]           // 手腕
@@ -45,6 +50,7 @@ class HandGestureDetector {
             wrist: wrist
         )
         if indexCurled { fistScore += 1.0 }
+        print("👆 食指弯曲检测: \(indexCurled ? "弯曲" : "伸直")")
         
         // 2. 检查中指弯曲程度
         let middleCurled = isFingerCurled(
@@ -54,6 +60,7 @@ class HandGestureDetector {
             wrist: wrist
         )
         if middleCurled { fistScore += 1.0 }
+        print("🖕 中指弯曲检测: \(middleCurled ? "弯曲" : "伸直")")
         
         // 3. 检查无名指弯曲程度
         let ringCurled = isFingerCurled(
@@ -63,6 +70,7 @@ class HandGestureDetector {
             wrist: wrist
         )
         if ringCurled { fistScore += 1.0 }
+        print("💍 无名指弯曲检测: \(ringCurled ? "弯曲" : "伸直")")
         
         // 4. 检查小指弯曲程度
         let pinkyCurled = isFingerCurled(
@@ -72,6 +80,7 @@ class HandGestureDetector {
             wrist: wrist
         )
         if pinkyCurled { fistScore += 1.0 }
+        print("🤙 小指弯曲检测: \(pinkyCurled ? "弯曲" : "伸直")")
         
         // 5. 检查拇指是否内收（握拳时拇指通常会内收）
         let thumbTucked = isThumbTucked(
@@ -81,10 +90,15 @@ class HandGestureDetector {
             middleMCP: middleMCP
         )
         if thumbTucked { fistScore += 1.0 }
+        print("👍 拇指内收检测: \(thumbTucked ? "内收" : "外展")")
         
         // 握拳判断：至少3个手指弯曲即认为是握拳（比MediaPipe更宽松）
         let fistThreshold: Float = 3.0
-        return fistScore >= fistThreshold
+        let isFist = fistScore >= fistThreshold
+        
+        print("📊 握拳得分: \(fistScore)/\(maxScore), 阈值: \(fistThreshold), 结果: \(isFist ? "握拳" : "张开")")
+        
+        return isFist
     }
     
     /// 检查手指是否弯曲
