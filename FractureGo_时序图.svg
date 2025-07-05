@@ -1,0 +1,256 @@
+<svg width="1600" height="1200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #34495e; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #2c3e50; }
+      .small-text { font-family: Arial, sans-serif; font-size: 10px; fill: #7f8c8d; }
+      .actor { fill: #3498db; stroke: #2980b9; stroke-width: 2; }
+      .lifeline { stroke: #bdc3c7; stroke-width: 2; stroke-dasharray: 5,5; }
+      .activation { fill: #ecf0f1; stroke: #95a5a6; stroke-width: 1; }
+      .message { stroke: #2c3e50; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .return-message { stroke: #27ae60; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-green); stroke-dasharray: 3,3; }
+      .self-message { stroke: #e74c3c; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-red); }
+      .note { fill: #fff3cd; stroke: #ffc107; stroke-width: 1; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50" />
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#27ae60" />
+    </marker>
+    <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c" />
+    </marker>
+  </defs>
+  
+  <!-- 标题 -->
+  <text x="800" y="30" text-anchor="middle" class="title">FractureGo 系统时序图</text>
+  <text x="800" y="55" text-anchor="middle" class="subtitle">用户登录与手势识别训练流程</text>
+  
+  <!-- 参与者 -->
+  <g id="actors">
+    <!-- 用户 -->
+    <rect x="50" y="80" width="80" height="40" class="actor" rx="5"/>
+    <text x="90" y="105" text-anchor="middle" class="text">用户</text>
+    
+    <!-- LoginView -->
+    <rect x="180" y="80" width="100" height="40" class="actor" rx="5"/>
+    <text x="230" y="105" text-anchor="middle" class="text">LoginView</text>
+    
+    <!-- UserManager -->
+    <rect x="330" y="80" width="100" height="40" class="actor" rx="5"/>
+    <text x="380" y="105" text-anchor="middle" class="text">UserManager</text>
+    
+    <!-- NetworkService -->
+    <rect x="480" y="80" width="120" height="40" class="actor" rx="5"/>
+    <text x="540" y="105" text-anchor="middle" class="text">NetworkService</text>
+    
+    <!-- 服务器 -->
+    <rect x="650" y="80" width="80" height="40" class="actor" rx="5"/>
+    <text x="690" y="105" text-anchor="middle" class="text">服务器</text>
+    
+    <!-- 数据库 -->
+    <rect x="780" y="80" width="80" height="40" class="actor" rx="5"/>
+    <text x="820" y="105" text-anchor="middle" class="text">数据库</text>
+    
+    <!-- CameraManager -->
+    <rect x="910" y="80" width="120" height="40" class="actor" rx="5"/>
+    <text x="970" y="105" text-anchor="middle" class="text">CameraManager</text>
+    
+    <!-- HandGestureDetector -->
+    <rect x="1080" y="80" width="140" height="40" class="actor" rx="5"/>
+    <text x="1150" y="105" text-anchor="middle" class="text">HandGestureDetector</text>
+    
+    <!-- MediaPipe -->
+    <rect x="1270" y="80" width="100" height="40" class="actor" rx="5"/>
+    <text x="1320" y="105" text-anchor="middle" class="text">MediaPipe</text>
+  </g>
+  
+  <!-- 生命线 -->
+  <g id="lifelines">
+    <line x1="90" y1="120" x2="90" y2="1100" class="lifeline"/>
+    <line x1="230" y1="120" x2="230" y2="1100" class="lifeline"/>
+    <line x1="380" y1="120" x2="380" y2="1100" class="lifeline"/>
+    <line x1="540" y1="120" x2="540" y2="1100" class="lifeline"/>
+    <line x1="690" y1="120" x2="690" y2="1100" class="lifeline"/>
+    <line x1="820" y1="120" x2="820" y2="1100" class="lifeline"/>
+    <line x1="970" y1="120" x2="970" y2="1100" class="lifeline"/>
+    <line x1="1150" y1="120" x2="1150" y2="1100" class="lifeline"/>
+    <line x1="1320" y1="120" x2="1320" y2="1100" class="lifeline"/>
+  </g>
+  
+  <!-- 场景1: 用户登录流程 -->
+  <g id="login-sequence">
+    <text x="50" y="160" class="subtitle">场景1: 用户登录流程</text>
+    
+    <!-- 激活框 -->
+    <rect x="225" y="180" width="10" height="200" class="activation"/>
+    <rect x="375" y="200" width="10" height="160" class="activation"/>
+    <rect x="535" y="220" width="10" height="120" class="activation"/>
+    <rect x="685" y="240" width="10" height="80" class="activation"/>
+    <rect x="815" y="260" width="10" height="40" class="activation"/>
+    
+    <!-- 消息 -->
+    <line x1="90" y1="190" x2="225" y2="190" class="message"/>
+    <text x="157" y="185" text-anchor="middle" class="small-text">1. 输入登录信息</text>
+    
+    <line x1="235" y1="210" x2="375" y2="210" class="message"/>
+    <text x="305" y="205" text-anchor="middle" class="small-text">2. validateLogin()</text>
+    
+    <line x1="385" y1="230" x2="535" y2="230" class="message"/>
+    <text x="460" y="225" text-anchor="middle" class="small-text">3. login(phone, password)</text>
+    
+    <line x1="545" y1="250" x2="685" y2="250" class="message"/>
+    <text x="615" y="245" text-anchor="middle" class="small-text">4. POST /api/users/login</text>
+    
+    <line x1="695" y1="270" x2="815" y2="270" class="message"/>
+    <text x="755" y="265" text-anchor="middle" class="small-text">5. 验证用户信息</text>
+    
+    <!-- 返回消息 -->
+    <line x1="815" y1="290" x2="695" y2="290" class="return-message"/>
+    <text x="755" y="285" text-anchor="middle" class="small-text">6. 用户数据</text>
+    
+    <line x1="685" y1="310" x2="545" y2="310" class="return-message"/>
+    <text x="615" y="305" text-anchor="middle" class="small-text">7. JWT Token + 用户信息</text>
+    
+    <line x1="535" y1="330" x2="385" y2="330" class="return-message"/>
+    <text x="460" y="325" text-anchor="middle" class="small-text">8. 登录成功</text>
+    
+    <line x1="375" y1="350" x2="235" y2="350" class="return-message"/>
+    <text x="305" y="345" text-anchor="middle" class="small-text">9. 更新用户状态</text>
+    
+    <line x1="225" y1="370" x2="90" y2="370" class="return-message"/>
+    <text x="157" y="365" text-anchor="middle" class="small-text">10. 跳转主界面</text>
+  </g>
+  
+  <!-- 场景2: 手势识别训练流程 -->
+  <g id="gesture-sequence">
+    <text x="50" y="420" class="subtitle">场景2: 手势识别训练流程</text>
+    
+    <!-- 激活框 -->
+    <rect x="965" y="440" width="10" height="300" class="activation"/>
+    <rect x="1145" y="460" width="10" height="260" class="activation"/>
+    <rect x="1315" y="480" width="10" height="220" class="activation"/>
+    <rect x="375" y="600" width="10" height="120" class="activation"/>
+    <rect x="535" y="620" width="10" height="80" class="activation"/>
+    <rect x="685" y="640" width="10" height="60" class="activation"/>
+    
+    <!-- 消息 -->
+    <line x1="90" y1="450" x2="965" y2="450" class="message"/>
+    <text x="527" y="445" text-anchor="middle" class="small-text">1. 开始训练</text>
+    
+    <line x1="975" y1="470" x2="1145" y2="470" class="message"/>
+    <text x="1060" y="465" text-anchor="middle" class="small-text">2. 启动摄像头</text>
+    
+    <line x1="1155" y1="490" x2="1315" y2="490" class="message"/>
+    <text x="1235" y="485" text-anchor="middle" class="small-text">3. detectHandGesture()</text>
+    
+    <!-- 自调用 -->
+    <path d="M 1320 510 L 1350 510 L 1350 530 L 1320 530" class="self-message"/>
+    <text x="1355" y="525" class="small-text">4. 处理视频帧</text>
+    
+    <line x1="1315" y1="550" x2="1155" y2="550" class="return-message"/>
+    <text x="1235" y="545" text-anchor="middle" class="small-text">5. 手势识别结果</text>
+    
+    <line x1="1145" y1="570" x2="975" y2="570" class="return-message"/>
+    <text x="1060" y="565" text-anchor="middle" class="small-text">6. 握拳状态</text>
+    
+    <!-- 训练数据保存 -->
+    <line x1="975" y1="610" x2="375" y2="610" class="message"/>
+    <text x="675" y="605" text-anchor="middle" class="small-text">7. 保存训练记录</text>
+    
+    <line x1="385" y1="630" x2="535" y2="630" class="message"/>
+    <text x="460" y="625" text-anchor="middle" class="small-text">8. saveTrainingRecord()</text>
+    
+    <line x1="545" y1="650" x2="685" y2="650" class="message"/>
+    <text x="615" y="645" text-anchor="middle" class="small-text">9. POST /api/training</text>
+    
+    <line x1="685" y1="680" x2="545" y2="680" class="return-message"/>
+    <text x="615" y="675" text-anchor="middle" class="small-text">10. 保存成功</text>
+    
+    <line x1="535" y1="700" x2="385" y2="700" class="return-message"/>
+    <text x="460" y="695" text-anchor="middle" class="small-text">11. 更新进度</text>
+    
+    <line x1="375" y1="720" x2="90" y2="720" class="return-message"/>
+    <text x="232" y="715" text-anchor="middle" class="small-text">12. 显示训练结果</text>
+  </g>
+  
+  <!-- 场景3: 社区帖子浏览流程 -->
+  <g id="post-sequence">
+    <text x="50" y="780" class="subtitle">场景3: 社区帖子浏览流程</text>
+    
+    <!-- 激活框 -->
+    <rect x="225" y="800" width="10" height="200" class="activation"/>
+    <rect x="535" y="820" width="10" height="160" class="activation"/>
+    <rect x="685" y="840" width="10" height="120" class="activation"/>
+    <rect x="815" y="860" width="10" height="80" class="activation"/>
+    
+    <!-- 消息 -->
+    <line x1="90" y1="810" x2="225" y2="810" class="message"/>
+    <text x="157" y="805" text-anchor="middle" class="small-text">1. 进入社区页面</text>
+    
+    <line x1="235" y1="830" x2="535" y2="830" class="message"/>
+    <text x="385" y="825" text-anchor="middle" class="small-text">2. fetchPosts()</text>
+    
+    <line x1="545" y1="850" x2="685" y2="850" class="message"/>
+    <text x="615" y="845" text-anchor="middle" class="small-text">3. GET /api/posts</text>
+    
+    <line x1="695" y1="870" x2="815" y2="870" class="message"/>
+    <text x="755" y="865" text-anchor="middle" class="small-text">4. 查询帖子列表</text>
+    
+    <!-- 返回消息 -->
+    <line x1="815" y1="890" x2="695" y2="890" class="return-message"/>
+    <text x="755" y="885" text-anchor="middle" class="small-text">5. 帖子数据</text>
+    
+    <line x1="685" y1="910" x2="545" y2="910" class="return-message"/>
+    <text x="615" y="905" text-anchor="middle" class="small-text">6. JSON响应</text>
+    
+    <line x1="535" y1="930" x2="235" y2="930" class="return-message"/>
+    <text x="385" y="925" text-anchor="middle" class="small-text">7. 帖子列表</text>
+    
+    <line x1="225" y1="950" x2="90" y2="950" class="return-message"/>
+    <text x="157" y="945" text-anchor="middle" class="small-text">8. 显示瀑布流</text>
+    
+    <!-- 点赞操作 -->
+    <line x1="90" y1="970" x2="225" y2="970" class="message"/>
+    <text x="157" y="965" text-anchor="middle" class="small-text">9. 点赞帖子</text>
+    
+    <line x1="235" y1="990" x2="535" y2="990" class="message"/>
+    <text x="385" y="985" text-anchor="middle" class="small-text">10. likePost(postId)</text>
+  </g>
+  
+  <!-- 注释框 -->
+  <g id="notes">
+    <rect x="900" y="800" width="200" height="80" class="note" rx="5"/>
+    <text x="910" y="820" class="small-text">注意事项:</text>
+    <text x="910" y="840" class="small-text">• JWT Token用于API认证</text>
+    <text x="910" y="855" class="small-text">• 手势识别实时处理</text>
+    <text x="910" y="870" class="small-text">• 训练数据本地缓存</text>
+  </g>
+  
+  <!-- 时序说明 -->
+  <g id="timing-info">
+    <text x="50" y="1050" class="subtitle">时序特点:</text>
+    <text x="50" y="1070" class="text">1. 同步调用: 用户登录、数据保存等关键操作</text>
+    <text x="50" y="1090" class="text">2. 异步处理: 手势识别、视频流处理</text>
+    <text x="50" y="1110" class="text">3. 实时反馈: 训练状态、手势检测结果</text>
+    <text x="50" y="1130" class="text">4. 错误处理: 网络异常、认证失败的重试机制</text>
+  </g>
+  
+  <!-- 图例 -->
+  <g id="legend">
+    <text x="1200" y="800" class="subtitle">图例:</text>
+    <line x1="1200" y1="820" x2="1250" y2="820" class="message"/>
+    <text x="1260" y="825" class="small-text">同步调用</text>
+    
+    <line x1="1200" y1="840" x2="1250" y2="840" class="return-message"/>
+    <text x="1260" y="845" class="small-text">返回消息</text>
+    
+    <path d="M 1200 860 L 1230 860 L 1230 880 L 1200 880" class="self-message"/>
+    <text x="1240" y="875" class="small-text">自调用</text>
+    
+    <rect x="1200" y="900" width="10" height="20" class="activation"/>
+    <text x="1220" y="915" class="small-text">激活期</text>
+  </g>
+</svg>

@@ -885,18 +885,15 @@ class HandRecoverGameScene: SKScene {
                  if let basketPosition = basket?.position {
                      raccoon.moveToBasket(basketPosition: basketPosition) {
                          self.handleRaccoonCaught()
+                         // 松开手势后允许生成新小浣熊
+                         self.canGenerateNewRaccoon = true
+                         print("松开手势，允许生成新小浣熊")
                      }
                  }
              } else {
                  print("握拳时间不够(\(clenchDuration)s < \(self.clenchDuration)s)，恢复跑步")
                  // 恢复跑步动画
                  raccoon.startRunningAnimation()
-             }
-                          
-             // 如果小浣熊已经被抓住（currentRaccoon为nil），允许生成新的小浣熊
-             if currentRaccoon == nil {
-                 canGenerateNewRaccoon = true
-                 print("松开手势，允许生成新小浣熊")
              }
          } else if isClenched && isHandClenched {
              // 持续握拳状态

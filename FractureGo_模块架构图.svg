@@ -1,0 +1,361 @@
+<svg width="1600" height="1200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #34495e; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #2c3e50; }
+      .small-text { font-family: Arial, sans-serif; font-size: 10px; fill: #7f8c8d; }
+      .layer-title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #ffffff; }
+      .module-title { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #2c3e50; }
+      .presentation-layer { fill: #3498db; stroke: #2980b9; stroke-width: 2; }
+      .business-layer { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; }
+      .service-layer { fill: #f39c12; stroke: #e67e22; stroke-width: 2; }
+      .data-layer { fill: #27ae60; stroke: #229954; stroke-width: 2; }
+      .external-layer { fill: #9b59b6; stroke: #8e44ad; stroke-width: 2; }
+      .module { fill: #ecf0f1; stroke: #95a5a6; stroke-width: 1; }
+      .dependency { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .interface { stroke: #e67e22; stroke-width: 1.5; fill: none; stroke-dasharray: 5,5; }
+      .data-flow { stroke: #27ae60; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead-green); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34495e" />
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#27ae60" />
+    </marker>
+  </defs>
+  
+  <!-- 标题 -->
+  <text x="800" y="30" text-anchor="middle" class="title">FractureGo 模块架构图</text>
+  <text x="800" y="55" text-anchor="middle" class="subtitle">分层架构设计与模块依赖关系</text>
+  
+  <!-- 表示层 (Presentation Layer) -->
+  <g id="presentation-layer">
+    <rect x="50" y="100" width="1500" height="180" class="presentation-layer" rx="10"/>
+    <text x="800" y="125" text-anchor="middle" class="layer-title">表示层 (Presentation Layer)</text>
+    
+    <!-- SwiftUI Views -->
+    <g id="views">
+      <rect x="80" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="140" y="175" text-anchor="middle" class="module-title">主界面模块</text>
+      <text x="140" y="190" text-anchor="middle" class="small-text">MainView</text>
+      <text x="140" y="205" text-anchor="middle" class="small-text">HomeView</text>
+      <text x="140" y="220" text-anchor="middle" class="small-text">ContentView</text>
+      
+      <rect x="220" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="280" y="175" text-anchor="middle" class="module-title">认证模块</text>
+      <text x="280" y="190" text-anchor="middle" class="small-text">LoginView</text>
+      <text x="280" y="205" text-anchor="middle" class="small-text">RegisterView</text>
+      <text x="280" y="220" text-anchor="middle" class="small-text">WeChatBindingView</text>
+      
+      <rect x="360" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="420" y="175" text-anchor="middle" class="module-title">训练模块</text>
+      <text x="420" y="190" text-anchor="middle" class="small-text">HandLevelView</text>
+      <text x="420" y="205" text-anchor="middle" class="small-text">ArmLevelView</text>
+      <text x="420" y="220" text-anchor="middle" class="small-text">LegLevelView</text>
+      
+      <rect x="500" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="560" y="175" text-anchor="middle" class="module-title">康复模块</text>
+      <text x="560" y="190" text-anchor="middle" class="small-text">HandRecoverView</text>
+      <text x="560" y="205" text-anchor="middle" class="small-text">CameraPreviewView</text>
+      <text x="560" y="220" text-anchor="middle" class="small-text">MLTestView</text>
+      
+      <rect x="640" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="700" y="175" text-anchor="middle" class="module-title">社区模块</text>
+      <text x="700" y="190" text-anchor="middle" class="small-text">ShareView</text>
+      <text x="700" y="205" text-anchor="middle" class="small-text">ShareViewModel</text>
+      
+      <rect x="780" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="840" y="175" text-anchor="middle" class="module-title">个人中心</text>
+      <text x="840" y="190" text-anchor="middle" class="small-text">MyView</text>
+      <text x="840" y="205" text-anchor="middle" class="small-text">SignInView</text>
+      
+      <rect x="920" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="980" y="175" text-anchor="middle" class="module-title">启动模块</text>
+      <text x="980" y="190" text-anchor="middle" class="small-text">SplashView</text>
+      <text x="980" y="205" text-anchor="middle" class="small-text">FractureGoApp</text>
+      
+      <rect x="1060" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="1120" y="175" text-anchor="middle" class="module-title">通用组件</text>
+      <text x="1120" y="190" text-anchor="middle" class="small-text">TopBlurView</text>
+      <text x="1120" y="205" text-anchor="middle" class="small-text">AccountLoginView</text>
+      
+      <rect x="1200" y="150" width="120" height="80" class="module" rx="5"/>
+      <text x="1260" y="175" text-anchor="middle" class="module-title">协议接口</text>
+      <text x="1260" y="190" text-anchor="middle" class="small-text">ViewProtocols</text>
+      <text x="1260" y="205" text-anchor="middle" class="small-text">ViewModelProtocols</text>
+      
+      <rect x="1340" y="150" width="180" height="80" class="module" rx="5"/>
+      <text x="1430" y="175" text-anchor="middle" class="module-title">架构协调器</text>
+      <text x="1430" y="190" text-anchor="middle" class="small-text">CoordinatorProtocols</text>
+      <text x="1430" y="205" text-anchor="middle" class="small-text">FractureGoInterfaces</text>
+    </g>
+  </g>
+  
+  <!-- 业务逻辑层 (Business Logic Layer) -->
+  <g id="business-layer">
+    <rect x="50" y="320" width="1500" height="160" class="business-layer" rx="10"/>
+    <text x="800" y="345" text-anchor="middle" class="layer-title">业务逻辑层 (Business Logic Layer)</text>
+    
+    <!-- Managers -->
+    <g id="managers">
+      <rect x="80" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="150" y="395" text-anchor="middle" class="module-title">用户管理器</text>
+      <text x="150" y="410" text-anchor="middle" class="small-text">UserManager</text>
+      <text x="150" y="425" text-anchor="middle" class="small-text">• 用户状态管理</text>
+      <text x="150" y="440" text-anchor="middle" class="small-text">• 登录验证</text>
+      
+      <rect x="240" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="310" y="395" text-anchor="middle" class="module-title">摄像头管理器</text>
+      <text x="310" y="410" text-anchor="middle" class="small-text">CameraManager</text>
+      <text x="310" y="425" text-anchor="middle" class="small-text">• 摄像头会话</text>
+      <text x="310" y="440" text-anchor="middle" class="small-text">• 视频输出</text>
+      
+      <rect x="400" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="470" y="395" text-anchor="middle" class="module-title">微信管理器</text>
+      <text x="470" y="410" text-anchor="middle" class="small-text">WeChatManager</text>
+      <text x="470" y="425" text-anchor="middle" class="small-text">• 微信登录</text>
+      <text x="470" y="440" text-anchor="middle" class="small-text">• 第三方认证</text>
+      
+      <rect x="560" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="630" y="395" text-anchor="middle" class="module-title">手势检测器</text>
+      <text x="630" y="410" text-anchor="middle" class="small-text">HandGestureDetector</text>
+      <text x="630" y="425" text-anchor="middle" class="small-text">• 握拳检测</text>
+      <text x="630" y="440" text-anchor="middle" class="small-text">• 关键点分析</text>
+      
+      <rect x="720" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="790" y="395" text-anchor="middle" class="module-title">ML服务工厂</text>
+      <text x="790" y="410" text-anchor="middle" class="small-text">MLServiceFactory</text>
+      <text x="790" y="425" text-anchor="middle" class="small-text">• 服务创建</text>
+      <text x="790" y="440" text-anchor="middle" class="small-text">• 依赖注入</text>
+      
+      <rect x="880" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="950" y="395" text-anchor="middle" class="module-title">数据模型</text>
+      <text x="950" y="410" text-anchor="middle" class="small-text">PostModels</text>
+      <text x="950" y="425" text-anchor="middle" class="small-text">UserModels</text>
+      <text x="950" y="440" text-anchor="middle" class="small-text">Extensions</text>
+      
+      <rect x="1040" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="1110" y="395" text-anchor="middle" class="module-title">业务协议</text>
+      <text x="1110" y="410" text-anchor="middle" class="small-text">AuthServiceProtocol</text>
+      <text x="1110" y="425" text-anchor="middle" class="small-text">DataServiceProtocol</text>
+      <text x="1110" y="440" text-anchor="middle" class="small-text">MLServiceProtocols</text>
+      
+      <rect x="1200" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="1270" y="395" text-anchor="middle" class="module-title">工具协议</text>
+      <text x="1270" y="410" text-anchor="middle" class="small-text">UtilityProtocols</text>
+      <text x="1270" y="425" text-anchor="middle" class="small-text">• 通用接口</text>
+      <text x="1270" y="440" text-anchor="middle" class="small-text">• 扩展功能</text>
+      
+      <rect x="1360" y="370" width="140" height="80" class="module" rx="5"/>
+      <text x="1430" y="395" text-anchor="middle" class="module-title">持久化管理</text>
+      <text x="1430" y="410" text-anchor="middle" class="small-text">Persistence</text>
+      <text x="1430" y="425" text-anchor="middle" class="small-text">• Core Data</text>
+      <text x="1430" y="440" text-anchor="middle" class="small-text">• 数据模型</text>
+    </g>
+  </g>
+  
+  <!-- 服务层 (Service Layer) -->
+  <g id="service-layer">
+    <rect x="50" y="520" width="1500" height="160" class="service-layer" rx="10"/>
+    <text x="800" y="545" text-anchor="middle" class="layer-title">服务层 (Service Layer)</text>
+    
+    <!-- Services -->
+    <g id="services">
+      <rect x="80" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="150" y="595" text-anchor="middle" class="module-title">网络服务</text>
+      <text x="150" y="610" text-anchor="middle" class="small-text">NetworkService</text>
+      <text x="150" y="625" text-anchor="middle" class="small-text">• API调用</text>
+      <text x="150" y="640" text-anchor="middle" class="small-text">• 请求管理</text>
+      
+      <rect x="240" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="310" y="595" text-anchor="middle" class="module-title">帖子服务</text>
+      <text x="310" y="610" text-anchor="middle" class="small-text">PostService</text>
+      <text x="310" y="625" text-anchor="middle" class="small-text">• 社区功能</text>
+      <text x="310" y="640" text-anchor="middle" class="small-text">• 媒体上传</text>
+      
+      <rect x="400" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="470" y="595" text-anchor="middle" class="module-title">ML服务</text>
+      <text x="470" y="610" text-anchor="middle" class="small-text">MediaPipeService</text>
+      <text x="470" y="625" text-anchor="middle" class="small-text">• 姿势检测</text>
+      <text x="470" y="640" text-anchor="middle" class="small-text">• AI推理</text>
+      
+      <rect x="560" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="630" y="595" text-anchor="middle" class="module-title">数据库配置</text>
+      <text x="630" y="610" text-anchor="middle" class="small-text">DatabaseConfig</text>
+      <text x="630" y="625" text-anchor="middle" class="small-text">• 连接管理</text>
+      <text x="630" y="640" text-anchor="middle" class="small-text">• 配置中心</text>
+      
+      <rect x="720" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="790" y="595" text-anchor="middle" class="module-title">安全服务</text>
+      <text x="790" y="610" text-anchor="middle" class="small-text">• JWT管理</text>
+      <text x="790" y="625" text-anchor="middle" class="small-text">• Token验证</text>
+      <text x="790" y="640" text-anchor="middle" class="small-text">• 加密解密</text>
+      
+      <rect x="880" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="950" y="595" text-anchor="middle" class="module-title">缓存服务</text>
+      <text x="950" y="610" text-anchor="middle" class="small-text">• 本地缓存</text>
+      <text x="950" y="625" text-anchor="middle" class="small-text">• 数据同步</text>
+      <text x="950" y="640" text-anchor="middle" class="small-text">• 离线支持</text>
+      
+      <rect x="1040" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="1110" y="595" text-anchor="middle" class="module-title">文件服务</text>
+      <text x="1110" y="610" text-anchor="middle" class="small-text">• 图片处理</text>
+      <text x="1110" y="625" text-anchor="middle" class="small-text">• 视频管理</text>
+      <text x="1110" y="640" text-anchor="middle" class="small-text">• 资源优化</text>
+      
+      <rect x="1200" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="1270" y="595" text-anchor="middle" class="module-title">通知服务</text>
+      <text x="1270" y="610" text-anchor="middle" class="small-text">• 推送通知</text>
+      <text x="1270" y="625" text-anchor="middle" class="small-text">• 事件分发</text>
+      <text x="1270" y="640" text-anchor="middle" class="small-text">• 状态更新</text>
+      
+      <rect x="1360" y="570" width="140" height="80" class="module" rx="5"/>
+      <text x="1430" y="595" text-anchor="middle" class="module-title">日志服务</text>
+      <text x="1430" y="610" text-anchor="middle" class="small-text">• 错误记录</text>
+      <text x="1430" y="625" text-anchor="middle" class="small-text">• 性能监控</text>
+      <text x="1430" y="640" text-anchor="middle" class="small-text">• 调试支持</text>
+    </g>
+  </g>
+  
+  <!-- 数据层 (Data Layer) -->
+  <g id="data-layer">
+    <rect x="50" y="720" width="750" height="160" class="data-layer" rx="10"/>
+    <text x="425" y="745" text-anchor="middle" class="layer-title">数据层 (Data Layer)</text>
+    
+    <!-- Data Storage -->
+    <g id="data-storage">
+      <rect x="80" y="770" width="140" height="80" class="module" rx="5"/>
+      <text x="150" y="795" text-anchor="middle" class="module-title">本地存储</text>
+      <text x="150" y="810" text-anchor="middle" class="small-text">UserDefaults</text>
+      <text x="150" y="825" text-anchor="middle" class="small-text">• 用户偏好</text>
+      <text x="150" y="840" text-anchor="middle" class="small-text">• 配置信息</text>
+      
+      <rect x="240" y="770" width="140" height="80" class="module" rx="5"/>
+      <text x="310" y="795" text-anchor="middle" class="module-title">Core Data</text>
+      <text x="310" y="810" text-anchor="middle" class="small-text">FractureGo.xcdatamodeld</text>
+      <text x="310" y="825" text-anchor="middle" class="small-text">• 本地数据库</text>
+      <text x="310" y="840" text-anchor="middle" class="small-text">• 离线数据</text>
+      
+      <rect x="400" y="770" width="140" height="80" class="module" rx="5"/>
+      <text x="470" y="795" text-anchor="middle" class="module-title">ML模型</text>
+      <text x="470" y="810" text-anchor="middle" class="small-text">hand_landmarker.task</text>
+      <text x="470" y="825" text-anchor="middle" class="small-text">pose_landmarker.task</text>
+      <text x="470" y="840" text-anchor="middle" class="small-text">• AI模型文件</text>
+      
+      <rect x="560" y="770" width="140" height="80" class="module" rx="5"/>
+      <text x="630" y="795" text-anchor="middle" class="module-title">资源文件</text>
+      <text x="630" y="810" text-anchor="middle" class="small-text">Assets.xcassets</text>
+      <text x="630" y="825" text-anchor="middle" class="small-text">• 图片资源</text>
+      <text x="630" y="840" text-anchor="middle" class="small-text">• 图标素材</text>
+    </g>
+  </g>
+  
+  <!-- 外部服务层 (External Services Layer) -->
+  <g id="external-layer">
+    <rect x="850" y="720" width="700" height="160" class="external-layer" rx="10"/>
+    <text x="1200" y="745" text-anchor="middle" class="layer-title">外部服务层 (External Services)</text>
+    
+    <!-- External Services -->
+    <g id="external-services">
+      <rect x="880" y="770" width="140" height="80" class="module" rx="5"/>
+      <text x="950" y="795" text-anchor="middle" class="module-title">后端服务器</text>
+      <text x="950" y="810" text-anchor="middle" class="small-text">Node.js + Express</text>
+      <text x="950" y="825" text-anchor="middle" class="small-text">• RESTful API</text>
+      <text x="950" y="840" text-anchor="middle" class="small-text">• 业务逻辑</text>
+      
+      <rect x="1040" y="770" width="140" height="80" class="module" rx="5"/>
+      <text x="1110" y="795" text-anchor="middle" class="module-title">数据库</text>
+      <text x="1110" y="810" text-anchor="middle" class="small-text">MySQL</text>
+      <text x="1110" y="825" text-anchor="middle" class="small-text">• 用户数据</text>
+      <text x="1110" y="840" text-anchor="middle" class="small-text">• 训练记录</text>
+      
+      <rect x="1200" y="770" width="140" height="80" class="module" rx="5"/>
+      <text x="1270" y="795" text-anchor="middle" class="module-title">微信平台</text>
+      <text x="1270" y="810" text-anchor="middle" class="small-text">WeChat SDK</text>
+      <text x="1270" y="825" text-anchor="middle" class="small-text">• 第三方登录</text>
+      <text x="1270" y="840" text-anchor="middle" class="small-text">• 社交分享</text>
+      
+      <rect x="1360" y="770" width="140" height="80" class="module" rx="5"/>
+      <text x="1430" y="795" text-anchor="middle" class="module-title">MediaPipe</text>
+      <text x="1430" y="810" text-anchor="middle" class="small-text">Google AI</text>
+      <text x="1430" y="825" text-anchor="middle" class="small-text">• 手势识别</text>
+      <text x="1430" y="840" text-anchor="middle" class="small-text">• 姿势检测</text>
+    </g>
+  </g>
+  
+  <!-- 依赖关系箭头 -->
+  <!-- 表示层到业务层 -->
+  <line x1="140" y1="230" x2="150" y2="370" class="dependency"/>
+  <line x1="280" y1="230" x2="150" y2="370" class="dependency"/>
+  <line x1="420" y1="230" x2="310" y2="370" class="dependency"/>
+  <line x1="560" y1="230" x2="630" y2="370" class="dependency"/>
+  <line x1="700" y1="230" x2="950" y2="370" class="dependency"/>
+  
+  <!-- 业务层到服务层 -->
+  <line x1="150" y1="450" x2="150" y2="570" class="dependency"/>
+  <line x1="310" y1="450" x2="310" y2="570" class="dependency"/>
+  <line x1="630" y1="450" x2="470" y2="570" class="dependency"/>
+  <line x1="950" y1="450" x2="310" y2="570" class="dependency"/>
+  
+  <!-- 服务层到数据层 -->
+  <line x1="150" y1="650" x2="150" y2="770" class="data-flow"/>
+  <line x1="310" y1="650" x2="310" y2="770" class="data-flow"/>
+  <line x1="470" y1="650" x2="470" y2="770" class="data-flow"/>
+  <line x1="630" y1="650" x2="630" y2="770" class="data-flow"/>
+  
+  <!-- 服务层到外部服务 -->
+  <line x1="150" y1="650" x2="950" y2="770" class="dependency"/>
+  <line x1="310" y1="650" x2="950" y2="770" class="dependency"/>
+  <line x1="470" y1="650" x2="1430" y2="770" class="dependency"/>
+  <line x1="630" y1="650" x2="1110" y2="770" class="dependency"/>
+  
+  <!-- 接口依赖 -->
+  <line x1="1260" y1="230" x2="1110" y2="370" class="interface"/>
+  <line x1="1430" y1="230" x2="790" y2="370" class="interface"/>
+  
+  <!-- 架构说明 -->
+  <g id="architecture-info">
+    <text x="50" y="920" class="subtitle">架构特点:</text>
+    <text x="50" y="940" class="text">• 分层架构: 表示层、业务逻辑层、服务层、数据层、外部服务层</text>
+    <text x="50" y="960" class="text">• 依赖注入: 通过协议和工厂模式实现松耦合</text>
+    <text x="50" y="980" class="text">• 单一职责: 每个模块专注于特定功能领域</text>
+    <text x="50" y="1000" class="text">• 可扩展性: 基于协议的设计支持功能扩展</text>
+    <text x="50" y="1020" class="text">• 数据流向: 自上而下的依赖关系，避免循环依赖</text>
+  </g>
+  
+  <!-- 模块职责说明 -->
+  <g id="module-responsibilities">
+    <text x="800" y="920" class="subtitle">模块职责:</text>
+    <text x="800" y="940" class="text">• 表示层: 用户界面展示和交互处理</text>
+    <text x="800" y="960" class="text">• 业务层: 核心业务逻辑和数据处理</text>
+    <text x="800" y="980" class="text">• 服务层: 网络通信和外部服务集成</text>
+    <text x="800" y="1000" class="text">• 数据层: 本地数据存储和模型管理</text>
+    <text x="800" y="1020" class="text">• 外部层: 第三方服务和云端资源</text>
+  </g>
+  
+  <!-- 图例 -->
+  <g id="legend">
+    <text x="1200" y="920" class="subtitle">图例:</text>
+    <line x1="1200" y1="940" x2="1250" y2="940" class="dependency"/>
+    <text x="1260" y="945" class="small-text">模块依赖</text>
+    
+    <line x1="1200" y1="960" x2="1250" y2="960" class="interface"/>
+    <text x="1260" y="965" class="small-text">接口依赖</text>
+    
+    <line x1="1200" y1="980" x2="1250" y2="980" class="data-flow"/>
+    <text x="1260" y="985" class="small-text">数据流向</text>
+    
+    <rect x="1200" y="1000" width="20" height="15" class="module"/>
+    <text x="1230" y="1012" class="small-text">功能模块</text>
+  </g>
+  
+  <!-- 技术栈标注 -->
+  <g id="tech-stack">
+    <text x="50" y="1080" class="subtitle">技术栈:</text>
+    <text x="50" y="1100" class="text">前端: SwiftUI + Combine + Core Data + MediaPipe</text>
+    <text x="50" y="1120" class="text">后端: Node.js + Express.js + MySQL + JWT</text>
+    <text x="50" y="1140" class="text">AI/ML: MediaPipe Tasks Vision + 自定义手势检测算法</text>
+    <text x="50" y="1160" class="text">第三方: 微信SDK + CocoaPods依赖管理</text>
+  </g>
+</svg>
