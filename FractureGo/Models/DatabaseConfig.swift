@@ -213,13 +213,22 @@ class DatabaseConfig: ObservableObject {
                 return
             }
             
+            // 添加调试信息：打印原始响应数据
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("📥 服务器响应数据: \(responseString)")
+            }
+            
             do {
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
                 let result = try decoder.decode(responseType, from: data)
+                print("✅ JSON解析成功")
                 completion(.success(result))
             } catch {
                 print("❌ JSON解析错误: \(error)")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("❌ 解析失败的原始数据: \(responseString)")
+                }
                 completion(.failure(.decodingError(error.localizedDescription)))
             }
         }.resume()
@@ -361,4 +370,4 @@ extension DatabaseConfig {
         
         return true
     }
-} 
+}

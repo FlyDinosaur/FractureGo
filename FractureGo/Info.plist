@@ -7,5 +7,7 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>此应用需要使用相机来检测手部动作，为您提供康复训练功能。</string>
 </dict>
 </plist>

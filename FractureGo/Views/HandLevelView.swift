@@ -136,6 +136,7 @@ struct HandLevelView: View {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let progressList):
+                    print("✅ 训练进度获取成功，数据条数: \(progressList.count)")
                     if let handProgress = progressList.first {
                         // 更新当前关卡
                         self.currentLevel = handProgress.currentLevel
@@ -143,15 +144,15 @@ struct HandLevelView: View {
                         // 更新完成的关卡（当前关卡之前的所有关卡都算完成）
                         self.completedLevels = Set(1..<handProgress.currentLevel)
                         
-                        print("手部训练进度加载成功：当前关卡 \(handProgress.currentLevel)，完成关卡 \(self.completedLevels)")
+                        print("✅ 手部训练进度加载成功：当前关卡 \(handProgress.currentLevel)，完成关卡 \(self.completedLevels)")
                     } else {
                         // 没有进度记录，使用默认值
                         self.currentLevel = 1
                         self.completedLevels = []
-                        print("没有找到手部训练进度，使用默认值")
+                        print("⚠️ 没有找到手部训练进度记录，使用默认值")
                     }
                 case .failure(let error):
-                    print("获取训练进度失败: \(error)")
+                    print("❌ 获取训练进度失败: \(error)")
                     // 失败时使用默认值
                     self.currentLevel = 1
                     self.completedLevels = []
