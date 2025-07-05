@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8B0D65E94D71C6443D3B5758 /* Pods_FractureGo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F2216936C55CA51592574E1 /* Pods_FractureGo.framework */; };
+		2832ACEB12445EF078845EDD /* Pods_FractureGo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B545B62A18CCCFE7E643C5C /* Pods_FractureGo.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0BE6B53500E3C35012FBE50F /* Pods-FractureGo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FractureGo.release.xcconfig"; path = "Target Support Files/Pods-FractureGo/Pods-FractureGo.release.xcconfig"; sourceTree = "<group>"; };
-		6F2216936C55CA51592574E1 /* Pods_FractureGo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_FractureGo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		77F7DF7A0F0971B9FF14B205 /* Pods-FractureGo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FractureGo.debug.xcconfig"; path = "Target Support Files/Pods-FractureGo/Pods-FractureGo.debug.xcconfig"; sourceTree = "<group>"; };
+		0D8DDBA5310FB12C381401B1 /* Pods-FractureGo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FractureGo.release.xcconfig"; path = "Target Support Files/Pods-FractureGo/Pods-FractureGo.release.xcconfig"; sourceTree = "<group>"; };
+		1B545B62A18CCCFE7E643C5C /* Pods_FractureGo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_FractureGo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		33FB597064B036325FCAB73E /* Pods-FractureGo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FractureGo.debug.xcconfig"; path = "Target Support Files/Pods-FractureGo/Pods-FractureGo.debug.xcconfig"; sourceTree = "<group>"; };
 		CA7C5E532E01C10400557BE4 /* FractureGo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FractureGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -43,28 +43,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8B0D65E94D71C6443D3B5758 /* Pods_FractureGo.framework in Frameworks */,
+				2832ACEB12445EF078845EDD /* Pods_FractureGo.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		23C083E82EDA91DF9000FE10 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1B545B62A18CCCFE7E643C5C /* Pods_FractureGo.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		41CDDC206F7AFBC429035D87 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				77F7DF7A0F0971B9FF14B205 /* Pods-FractureGo.debug.xcconfig */,
-				0BE6B53500E3C35012FBE50F /* Pods-FractureGo.release.xcconfig */,
+				33FB597064B036325FCAB73E /* Pods-FractureGo.debug.xcconfig */,
+				0D8DDBA5310FB12C381401B1 /* Pods-FractureGo.release.xcconfig */,
 			);
 			path = Pods;
-			sourceTree = "<group>";
-		};
-		B513BB3542C7B0892D31BB25 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				6F2216936C55CA51592574E1 /* Pods_FractureGo.framework */,
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		CA7C5E4A2E01C10400557BE4 = {
@@ -73,7 +73,7 @@
 				CA7C5E552E01C10400557BE4 /* FractureGo */,
 				CA7C5E542E01C10400557BE4 /* Products */,
 				41CDDC206F7AFBC429035D87 /* Pods */,
-				B513BB3542C7B0892D31BB25 /* Frameworks */,
+				23C083E82EDA91DF9000FE10 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -92,7 +92,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = CA7C5E662E01C10600557BE4 /* Build configuration list for PBXNativeTarget "FractureGo" */;
 			buildPhases = (
-				594BA50F91C8CF99092FE0CC /* [CP] Check Pods Manifest.lock */,
+				4CC89989013414EC78937ED3 /* [CP] Check Pods Manifest.lock */,
 				CA7C5E4F2E01C10400557BE4 /* Sources */,
 				CA7C5E502E01C10400557BE4 /* Frameworks */,
 				CA7C5E512E01C10400557BE4 /* Resources */,
@@ -154,7 +154,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		594BA50F91C8CF99092FE0CC /* [CP] Check Pods Manifest.lock */ = {
+		4CC89989013414EC78937ED3 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -310,7 +310,7 @@
 		};
 		CA7C5E672E01C10600557BE4 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 77F7DF7A0F0971B9FF14B205 /* Pods-FractureGo.debug.xcconfig */;
+			baseConfigurationReference = 33FB597064B036325FCAB73E /* Pods-FractureGo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -344,7 +344,7 @@
 		};
 		CA7C5E682E01C10600557BE4 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0BE6B53500E3C35012FBE50F /* Pods-FractureGo.release.xcconfig */;
+			baseConfigurationReference = 0D8DDBA5310FB12C381401B1 /* Pods-FractureGo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

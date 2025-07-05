@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct HandLevelView: View {
-    @State private var completedLevels: Set<Int> = [] // 只有第一关解锁，没有完成
+    @State private var completedLevels: Set<Int> = [] // 从服务器获取的完成关卡
+    @State private var currentLevel: Int = 1 // 当前解锁的关卡
     @Environment(\.dismiss) private var dismiss
     @Environment(\.presentationMode) var presentationMode // 添加系统presentation模式
     private let handColor = Color(red: 1.0, green: 0.706, blue: 0.694) // #ffb4b1
@@ -49,8 +50,10 @@ struct HandLevelView: View {
                             // 4. 关卡按钮（第1关在底部，重新排序）
                             HandLevelButtonsView(
                                 completedLevels: $completedLevels,
+                                currentLevel: currentLevel,
                                 geometry: geometry,
-                                color: handColor
+                                color: handColor,
+                                onRefreshProgress: loadTrainingProgress
                             )
                             
                             // 5. 礼品盒 - 位于第8关左下方
@@ -89,6 +92,8 @@ struct HandLevelView: View {
                         navigationController.interactivePopGestureRecognizer?.isEnabled = true
                     }
                 }
+                // 获取训练进度
+                loadTrainingProgress()
             }
             
             // 7. TopBlurView - 顶部遮挡 - 最外层确保显示
@@ -122,45 +127,93 @@ struct HandLevelView: View {
             .zIndex(300) // 最高层级，确保可见
         }
     }
+    
+    // MARK: - 训练进度相关方法
+    private func loadTrainingProgress() {
+        let networkService = NetworkService.shared
+        
+        networkService.getTrainingProgress(trainingType: "hand") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let progressList):
+                    if let handProgress = progressList.first {
+                        // 更新当前关卡
+                        self.currentLevel = handProgress.currentLevel
+                        
+                        // 更新完成的关卡（当前关卡之前的所有关卡都算完成）
+                        self.completedLevels = Set(1..<handProgress.currentLevel)
+                        
+                        print("手部训练进度加载成功：当前关卡 \(handProgress.currentLevel)，完成关卡 \(self.completedLevels)")
+                    } else {
+                        // 没有进度记录，使用默认值
+                        self.currentLevel = 1
+                        self.completedLevels = []
+                        print("没有找到手部训练进度，使用默认值")
+                    }
+                case .failure(let error):
+                    print("获取训练进度失败: \(error)")
+                    // 失败时使用默认值
+                    self.currentLevel = 1
+                    self.completedLevels = []
+                }
+            }
+        }
+    }
 }
 
 // 手部关卡按钮视图（第1关在底部，重新排序）
 private struct HandLevelButtonsView: View {
     @Binding var completedLevels: Set<Int>
+    let currentLevel: Int
     let geometry: GeometryProxy
     let color: Color
+    let onRefreshProgress: () -> Void
+    @State private var selectedLevel: Int? = nil
+    @State private var showHandRecoverView = false
     
     var body: some View {
         let positions = getHandLevelPositions(in: geometry)
         
-        ForEach(1...8, id: \.self) { level in
-            let position = positions[level - 1]
-            let isUnlocked = isLevelUnlocked(level)
-            let isCompleted = completedLevels.contains(level)
-            
-            HandLevelButton(
-                level: level,
-                isUnlocked: isUnlocked,
-                isCompleted: isCompleted,
-                color: color
-            ) {
-                handleLevelTap(level)
+        ZStack {
+            ForEach(1...8, id: \.self) { level in
+                let position = positions[level - 1]
+                let isUnlocked = isLevelUnlocked(level)
+                let isCompleted = completedLevels.contains(level)
+                
+                HandLevelButton(
+                    level: level,
+                    isUnlocked: isUnlocked,
+                    isCompleted: isCompleted,
+                    color: color
+                ) {
+                    if isUnlocked {
+                        print("Button tapped for level \(level)")
+                        selectedLevel = level
+                        DispatchQueue.main.async {
+                            showHandRecoverView = true
+                            print("Setting showHandRecoverView to true for level \(level)")
+                        }
+                    }
+                }
+                .position(position)
             }
-            .position(position)
+        }
+        .fullScreenCover(isPresented: $showHandRecoverView) {
+            HandRecoverView(level: selectedLevel ?? 1)
+                .onAppear {
+                    print("Presenting HandRecoverView for level \(selectedLevel ?? 1)")
+                }
+                .onDisappear {
+                    // 游戏结束后刷新训练进度
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        onRefreshProgress()
+                    }
+                }
         }
     }
     
     private func isLevelUnlocked(_ level: Int) -> Bool {
-        if level == 1 { return true }
-        return completedLevels.contains(level - 1)
-    }
-    
-    private func handleLevelTap(_ level: Int) {
-        guard isLevelUnlocked(level) else { return }
-        
-        let _ = withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
-            completedLevels.insert(level)
-        }
+        return level <= currentLevel
     }
 }
 
@@ -285,54 +338,53 @@ private struct HandLevelButton: View {
     @State private var isPressed = false
     
     var body: some View {
-        Button(action: action) {
-            ZStack {
-                // 大圆形背景 (半透明背景，不是白色)
-                Circle()
-                    .fill(color.opacity(0.2))
-                    .frame(width: 70, height: 70)
-                    .overlay(
-                        Circle()
-                            .stroke(color.opacity(0.4), lineWidth: 2)
-                    )
-                
-                // 按钮主体
-                Circle()
-                    .fill(buttonBackgroundColor)
-                    .frame(width: 45, height: 45)
-                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    .scaleEffect(isPressed ? 0.95 : 1.0)
-                
-                // 按钮内容
-                if isUnlocked {
-                    if isCompleted {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                    } else {
-                        Text("\(level)")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                    }
+        ZStack {
+            // 大圆形背景 (半透明背景，不是白色)
+            Circle()
+                .fill(color.opacity(0.2))
+                .frame(width: 70, height: 70)
+                .overlay(
+                    Circle()
+                        .stroke(color.opacity(0.4), lineWidth: 2)
+                )
+            
+            // 按钮主体
+            Circle()
+                .fill(buttonBackgroundColor)
+                .frame(width: 45, height: 45)
+                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                .scaleEffect(isPressed ? 0.95 : 1.0)
+            
+            // 按钮内容
+            if isUnlocked {
+                if isCompleted {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
                 } else {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 16, weight: .medium))
+                    Text("\(level)")
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                 }
-            }
-        }
-        .disabled(!isUnlocked)
-        .pressEvents {
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = true
-            }
-        } onRelease: {
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = false
+            } else {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
             }
         }
         .scaleEffect(isCompleted ? 1.05 : 1.0)
         .animation(.spring(response: 0.5, dampingFraction: 0.6), value: isCompleted)
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isPressed = false
+                }
+                action()
+            }
+        }
     }
     
     private var buttonBackgroundColor: Color {
@@ -464,4 +516,4 @@ private func getHandPathEndPosition(in geometry: GeometryProxy) -> CGPoint {
 
 #Preview {
     HandLevelView()
-} 
+}

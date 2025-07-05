@@ -202,6 +202,13 @@ struct SignInView: View {
                 }
             }
         )
+        .onAppear {
+            // 每次视图出现时刷新当前月份的签到数据
+            let currentDate = Date()
+            let year = Calendar.current.component(.year, from: currentDate)
+            let month = Calendar.current.component(.month, from: currentDate)
+            dataManager.loadSignInData(for: year, month: month)
+        }
     }
 }
 
@@ -594,4 +601,4 @@ struct YearMonthPickerView: View {
 // MARK: - 预览
 #Preview {
     SignInView()
-} 
+}

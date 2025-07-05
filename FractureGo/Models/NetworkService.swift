@@ -422,6 +422,46 @@ class NetworkService: ObservableObject {
         }
     }
     
+    /// 更新当前关卡
+    func updateCurrentLevel(
+        trainingType: String,
+        level: Int,
+        completion: @escaping (Result<Void, NetworkError>) -> Void
+    ) {
+        guard var request = databaseConfig.createURLRequest(for: "/training/current-level", method: .PUT) else {
+            completion(.failure(.invalidResponse))
+            return
+        }
+        
+        databaseConfig.addAuthToken(to: &request)
+        
+        let requestBody = UpdateCurrentLevelRequest(trainingType: trainingType, level: level)
+        
+        do {
+            let jsonData = try JSONEncoder().encode(requestBody)
+            request.httpBody = jsonData
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        } catch {
+            completion(.failure(.invalidResponse))
+            return
+        }
+        
+        databaseConfig.executeRequest(request: request, responseType: APIResponse<EmptyResponse>.self) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    if response.success {
+                        completion(.success(()))
+                    } else {
+                        completion(.failure(.requestFailed(response.message ?? "更新关卡失败")))
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+        }
+    }
+    
     // MARK: - 健康检查
     func checkServerHealth(completion: @escaping (Bool) -> Void) {
         databaseConfig.healthCheck { success, _ in
@@ -487,6 +527,11 @@ struct RecordTrainingRequest: Codable {
             self.data = nil
         }
     }
+}
+
+struct UpdateCurrentLevelRequest: Codable {
+    let trainingType: String
+    let level: Int
 }
 
 // MARK: - 响应模型
