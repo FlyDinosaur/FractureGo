@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/FlyDinosaur/FractureGo">
+  <a href="https://github.com/FlyDinosaur/FractureGo/docs">
     <img src="icon.svg" alt="Logo" width="80" height="80">
   </a>
 
@@ -205,7 +205,7 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the GNU AFFERO GENERAL PUBLIC LICENSE V3.0. See `LICENSE` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
