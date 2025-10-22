@@ -1,8 +1,7 @@
 <div align="center">
-  <a href="https://github.com/FlyDinosaur/FractureGo/tree/main/docs">
+  <a href="https://github.com/FlyDinosaur/FractureGo/tree/main/docs/">
     <img src="icon.svg" alt="Logo" width="80" height="80">
   </a>
-  
   <h3 align="center">FractureGo</h3>
 
   <p align="center">
